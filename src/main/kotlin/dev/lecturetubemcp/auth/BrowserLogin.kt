@@ -125,7 +125,7 @@ object Browsers {
         }
         return choice ?: throw IllegalStateException(
             (why?.let { "$it, and no " } ?: "No ") + "other supported browser was found (Chrome, Edge, Brave, Opera, Vivaldi, Chromium, Firefox …). " +
-                "Set LECTURETUBE_BROWSER to the browser executable, or use set_session_cookie instead.",
+                "Set LECTURETUBE_BROWSER to the browser executable, or set LECTURETUBE_COOKIE to a Cookie header copied from the browser.",
         )
     }
 

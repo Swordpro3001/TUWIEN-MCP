@@ -159,12 +159,14 @@ object FileText {
             .map { it.name to z.getInputStream(it).use { s -> s.readAllBytes() } }
     }
 
+    /** Office files come from other course members: no DTDs, so no external entities that could read local files. */
+    private fun safeXml(): XMLInputFactory = XMLInputFactory.newInstance().apply {
+        setProperty(XMLInputFactory.SUPPORT_DTD, false)
+        setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
+    }
+
     private fun xmlText(xml: ByteArray, textTags: Set<String>?, breakTags: Set<String>, tabTags: Set<String>): String {
-        val f = XMLInputFactory.newInstance().apply {
-            setProperty(XMLInputFactory.SUPPORT_DTD, false)
-            setProperty("javax.xml.stream.isSupportingExternalEntities", false)
-        }
-        val r = f.createXMLStreamReader(ByteArrayInputStream(xml))
+        val r = safeXml().createXMLStreamReader(ByteArrayInputStream(xml))
         val sb = StringBuilder()
         var depthInText = 0
         while (r.hasNext()) {
@@ -201,7 +203,7 @@ object FileText {
         val shared = zipTexts(bytes, Regex("xl/sharedStrings\\.xml")).firstOrNull()?.second?.let { xml ->
             // Each <si> is one string; collect <t> texts per <si>.
             val out = mutableListOf<String>()
-            val r = XMLInputFactory.newInstance().createXMLStreamReader(ByteArrayInputStream(xml))
+            val r = safeXml().createXMLStreamReader(ByteArrayInputStream(xml))
             var cur: StringBuilder? = null; var inT = false
             while (r.hasNext()) {
                 when (r.next()) {
@@ -215,7 +217,7 @@ object FileText {
         val sheets = zipTexts(bytes, Regex("xl/worksheets/sheet\\d+\\.xml"))
         return sheets.joinToString("\n\n") { (name, xml) ->
             val sb = StringBuilder("--- ${name.substringAfterLast('/').removeSuffix(".xml")} ---\n")
-            val r = XMLInputFactory.newInstance().createXMLStreamReader(ByteArrayInputStream(xml))
+            val r = safeXml().createXMLStreamReader(ByteArrayInputStream(xml))
             var type: String? = null; var inV = false; var rows = 0
             val row = mutableListOf<String>()
             while (r.hasNext() && rows < 2000) {

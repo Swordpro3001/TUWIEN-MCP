@@ -173,6 +173,7 @@ All optional. Set them as environment variables. `transcription.json` supports o
 | `LECTURETUBE_WHISPER_MODEL` | Local model: `tiny`, `base`, `small` (default), `medium`, `turbo`, `large` |
 | `WHISPER_CLI`, `FFMPEG`, `FFPROBE` | Paths to external tools (a GPU `whisper-cli` is used automatically) |
 | `LECTURETUBE_BROWSER` | Login browser instead of the system default |
+| `LECTURETUBE_COOKIE` | Fallback without a supported browser: a `Cookie` header copied from video.tuwien.ac.at |
 | `LECTURETUBE_MCP_HOME` | Data folder (default `~/.config/lecturetube-mcp`) |
 | `LECTURETUBE_MEDIA_CACHE_GB` | Video cache limit (default 5) |
 

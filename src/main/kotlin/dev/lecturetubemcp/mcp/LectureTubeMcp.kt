@@ -153,31 +153,6 @@ class LectureTubeMcp(private val svc: LectureTubeService, private val logins: Lo
             SessionStore.clear()
             ok("Local session removed. (The TU Wien SSO session in the login browser profile may still be active.)")
         }
-
-        server.tool(
-            "set_session_cookie",
-            "Fallback if the automatic browser login doesn't work: store a Cookie header copied from the browser " +
-                "dev tools (Network tab, any request to video.tuwien.ac.at/graphql). Must include the _shibsession_… cookie.",
-            schema(
-                "cookie" to prop("string", "Cookie header value, e.g. `_shibsession_6465…=_abc123; …`"),
-                "host" to prop("string", "Host the cookie belongs to (default video.tuwien.ac.at)."),
-                required = listOf("cookie"),
-            ),
-            readOnly = false,
-        ) { args ->
-            val host = args.str("host") ?: Config.TOBIRA_HOST
-            val candidate = SessionStore.fromCookieHeader(args.reqStr("cookie"), host)
-            val merged = SessionStore.current?.let { cur ->
-                cur.copy(cookies = cur.cookies.filterNot { it.domain == host } + candidate.cookies, source = "manual")
-            } ?: candidate
-            val user = runCatching { svc.client.currentUser(merged) }.getOrNull()
-            if (host == Config.TOBIRA_HOST && user == null) {
-                err("LectureTube did not accept this cookie (currentUser is null). Nothing was saved.")
-            } else {
-                SessionStore.save(merged.copy(username = user?.first, displayName = user?.second))
-                ok("Session saved" + (user?.let { " for ${it.second} (${it.first})" } ?: "") + ".")
-            }
-        }
     }
 
     private fun registerContentTools(server: Server) {

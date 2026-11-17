@@ -51,6 +51,16 @@ class MoodleClient(private val sessionProvider: () -> Session? = { SessionStore.
         const val TOKEN_KEY = "tuwel.wstoken"
         const val PRIVATE_TOKEN_KEY = "tuwel.privatetoken"
         val base = Config.TUWEL
+
+        /** URLs may come from course content via the model, so only https URLs on the TUWEL host itself are fetched. */
+        fun requireTuwelUrl(url: String): String {
+            val u = runCatching { URI(url) }.getOrNull()
+            require(
+                u != null && u.scheme == "https" && u.host.equals(Config.TUWEL_HOST, ignoreCase = true) &&
+                    u.rawUserInfo == null && (u.port == -1 || u.port == 443),
+            ) { "Only https://${Config.TUWEL_HOST}/ URLs are allowed, not: $url" }
+            return url
+        }
     }
 
     val token: String? get() = System.getenv("TUWEL_TOKEN")?.takeIf { it.isNotBlank() } ?: sessionProvider()?.tokens?.get(TOKEN_KEY)
@@ -167,9 +177,9 @@ class MoodleClient(private val sessionProvider: () -> Session? = { SessionStore.
      * web-service variant when only a token is available.
      */
     suspend fun download(fileUrl: String, maxBytes: Long = 200L * 1024 * 1024): Pair<ByteArray, String?> {
-        var url = fileUrl
+        var url = requireTuwelUrl(fileUrl)
         val t = token
-        if (t != null && url.startsWith(base)) {
+        if (t != null) {
             if (url.contains("/pluginfile.php/") && !url.contains("/webservice/pluginfile.php/")) {
                 url = url.replace("$base/pluginfile.php/", "$base/webservice/pluginfile.php/")
             }
@@ -206,9 +216,9 @@ class MoodleClient(private val sessionProvider: () -> Session? = { SessionStore.
      * web-service URLs, otherwise the session cookie is sent. Used for video files.
      */
     fun mediaRequest(fileUrl: String): Pair<String, Map<String, String>> {
-        var url = fileUrl
+        var url = requireTuwelUrl(fileUrl)
         val t = token
-        if (t != null && url.startsWith(base)) {
+        if (t != null) {
             if (url.contains("/pluginfile.php/") && !url.contains("/webservice/pluginfile.php/")) {
                 url = url.replace("$base/pluginfile.php/", "$base/webservice/pluginfile.php/")
             }
@@ -221,7 +231,7 @@ class MoodleClient(private val sessionProvider: () -> Session? = { SessionStore.
 
     /** GET an HTML page with the session cookie (for pages not covered by the API). */
     suspend fun page(path: String): String {
-        val resp = http.sendAsync(cookieReq(if (path.startsWith("http")) path else base + path).GET().build(), HttpResponse.BodyHandlers.ofString()).await()
+        val resp = http.sendAsync(cookieReq(if (path.startsWith("http")) requireTuwelUrl(path) else base + path).GET().build(), HttpResponse.BodyHandlers.ofString()).await()
         if (resp.statusCode() in 300..399) throw MoodleException("TUWEL requires login for $path. Call the `login` tool.", needsLogin = true)
         if (resp.statusCode() != 200) throw MoodleException("HTTP ${resp.statusCode()} for $path")
         return resp.body()

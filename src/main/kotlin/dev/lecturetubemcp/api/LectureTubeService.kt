@@ -359,11 +359,14 @@ class LectureTubeService(val client: LectureTubeClient) {
         if (s.contains('T')) s else s + if (endOfDay) "T23:59:59Z" else "T00:00:00Z"
 
     companion object {
-        /** Very small guard so the raw GraphQL tool stays read-only. */
+        /**
+         * Keeps the raw GraphQL tool read-only. GraphQL ignores commas, BOMs and other separators before an operation,
+         * so any bare `mutation`/`subscription` word outside strings and comments is rejected, wherever it stands.
+         */
         fun isReadOnlyDocument(doc: String): Boolean {
             val noStrings = doc.replace(Regex("\"\"\"[\\s\\S]*?\"\"\"|\"(?:\\\\.|[^\"\\\\])*\""), "\"\"")
             val noComments = noStrings.lines().joinToString("\n") { it.substringBefore('#') }
-            return !Regex("(^|[\\s{}])(mutation|subscription)\\b").containsMatchIn(noComments)
+            return !Regex("(?<![A-Za-z0-9_])(mutation|subscription)(?![A-Za-z0-9_])", RegexOption.IGNORE_CASE).containsMatchIn(noComments)
         }
     }
 }
