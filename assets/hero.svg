@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#004d73"/>
+      <stop offset="1" stop-color="#0a7ab8"/>
+    </linearGradient>
+  </defs>
+  <rect width="880" height="300" rx="18" fill="url(#bg)"/>
+  <circle cx="800" cy="40" r="120" fill="#ffffff" opacity="0.05"/>
+  <circle cx="90" cy="300" r="140" fill="#ffffff" opacity="0.04"/>
+  <text x="440" y="82" text-anchor="middle" font-size="40" font-weight="700" fill="#ffffff">TU Wien for Claude</text>
+  <text x="440" y="118" text-anchor="middle" font-size="18" fill="#cfe6f5">Your TUWEL courses and LectureTube recordings, right inside Claude.</text>
+  <g font-size="14" fill="#cfe6f5" text-anchor="middle">
+    <rect x="60" y="152" width="236" height="108" rx="12" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="178" y="198" font-size="30" font-weight="700" fill="#ffffff">&lt; 20 s</text>
+    <text x="178" y="226">to transcribe an hour of audio</text>
+    <rect x="322" y="152" width="236" height="108" rx="12" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="440" y="198" font-size="30" font-weight="700" fill="#ffffff">1 login</text>
+    <text x="440" y="226">for TUWEL and LectureTube</text>
+    <rect x="584" y="152" width="236" height="108" rx="12" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="702" y="198" font-size="30" font-weight="700" fill="#ffffff">40 tools</text>
+    <text x="702" y="226">files, deadlines, grades, recordings</text>
+  </g>
+</svg>

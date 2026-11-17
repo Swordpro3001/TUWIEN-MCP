@@ -1,123 +1,206 @@
-# TU Wien MCP servers: TUWEL + LectureTube
+<p align="center">
+  <img src="assets/hero.svg" width="880" alt="TU Wien for Claude: transcribe an hour of audio in under 20 seconds, one login for TUWEL and LectureTube, 40 tools">
+</p>
 
-Two unofficial [MCP](https://modelcontextprotocol.io) servers that let an AI assistant (Claude Desktop, Claude Code, …)
-work with your TU Wien courses:
+<p align="center">
+  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Swordpro3001/TUWIEN-MCP/ci.yml?branch=main&style=flat-square&color=0a7ab8&label=CI" alt="CI"></a>
+  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=0a7ab8&label=release" alt="Release"></a>
+  <img src="https://img.shields.io/badge/java-17%2B-0a7ab8?style=flat-square" alt="Java 17+">
+  <img src="https://img.shields.io/badge/Claude%20Code-plugin-0a7ab8?style=flat-square" alt="Claude Code plugin">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0a7ab8?style=flat-square" alt="MIT license"></a>
+</p>
 
-| Jar | Service | What the AI can do |
-|---|---|---|
-| `tuwel-mcp.jar` | [TUWEL](https://tuwel.tuwien.ac.at) | courses, files (PDF, Office, ZIP, …), assignments, deadlines, grades, forums, course recordings, summaries |
-| `lecturetube-mcp.jar` | [LectureTube](https://video.tuwien.ac.at) | search lectures, read transcripts and slides, summarise recordings |
+<p align="center">
+  <a href="#install">Install</a> &nbsp;|&nbsp;
+  <a href="#what-it-can-do">What it can do</a> &nbsp;|&nbsp;
+  <a href="#transcription">Transcription</a> &nbsp;|&nbsp;
+  <a href="#login-and-privacy">Login and privacy</a> &nbsp;|&nbsp;
+  <a href="#configuration">Configuration</a> &nbsp;|&nbsp;
+  <a href=".github/CONTRIBUTING.md">Contributing</a>
+</p>
 
-Both share one TU Wien login. Recordings without captions can be transcribed, and slides can be read from the video.
+Two unofficial [MCP](https://modelcontextprotocol.io) servers that let Claude read your courses, files, deadlines and
+lecture recordings, so you can ask things like:
 
+> *"What's due this week, and what do I still need to hand in?"*<br>
+> *"Summarise this week's material of Analysis 2, including the lecture recording."*<br>
+> *"Make me an exam prep sheet from all slides and transcripts of 101.883."*
+
+> [!NOTE]
 > Not affiliated with TU Wien. Respect the terms of use and the licenses of the material.
 > Summaries of course-only recordings are for your personal use.
 
-## Quick start
+## Install
 
-1. **Download** both jars from the [latest release](../../releases/latest), or **build** them (needs a JDK; the jars run on Java 17+):
-   ```bash
-   ./gradlew allJars          # → build/libs/tuwel-mcp.jar and build/libs/lecturetube-mcp.jar
-   ```
-2. **Add to your MCP client.** Claude Desktop (`claude_desktop_config.json`):
+### Claude Code plugin (recommended)
+
+```
+/plugin install tuwien --marketplace Swordpro3001/TUWIEN-MCP
+```
+
+Both servers are added; on first start the plugin downloads the jars of the matching release.
+**Requirements:** Java 17+ and, for transcription and keyframes, [`ffmpeg`](https://ffmpeg.org) on the `PATH`.
+
+Then just ask: *"Log me in to TUWEL and show my courses."*
+
+<details>
+<summary><b>Manual setup</b> (Claude Desktop or other MCP clients)</summary>
+<br>
+
+1. Download `tuwel-mcp.jar` and `lecturetube-mcp.jar` from the [latest release](https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest),
+   or build them with `./gradlew allJars` (into `build/libs/`).
+2. Add them to `claude_desktop_config.json`:
    ```json
    {
      "mcpServers": {
-       "tuwel":       { "command": "java", "args": ["-jar", "/path/to/build/libs/tuwel-mcp.jar"] },
-       "lecturetube": { "command": "java", "args": ["-jar", "/path/to/build/libs/lecturetube-mcp.jar"] }
+       "tuwel":       { "command": "java", "args": ["-jar", "/path/to/tuwel-mcp.jar"] },
+       "lecturetube": { "command": "java", "args": ["-jar", "/path/to/lecturetube-mcp.jar"] }
      }
    }
    ```
-   Claude Code: `claude mcp add tuwel -- java -jar /path/to/build/libs/tuwel-mcp.jar` (same for `lecturetube`).
-3. **Ask**, e.g. *"Log me in to TUWEL and summarise this week's material of Analysis 2."*
+   Claude Code without the plugin: `claude mcp add tuwel -- java -jar /path/to/tuwel-mcp.jar` (same for `lecturetube`).
+3. Restart the client. `java -jar tuwel-mcp.jar doctor` checks the setup.
 
-For transcription install `ffmpeg`. `java -jar build/libs/tuwel-mcp.jar doctor` checks the setup.
+</details>
 
-## Tools
+## What it can do
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3>TUWEL</h3>
+<b>Read course material</b><br>
+PDFs, Word, PowerPoint, Excel, OpenDocument, notebooks, code and images, plus <b>ZIP archives</b> without unpacking.
+<br><br>
+<b>Stay on top of deadlines</b><br>
+Upcoming deadlines, calendar, assignments with submission status, grades and feedback.
+<br><br>
+<b>Follow the forums</b><br>
+Announcements, Q&amp;A discussions, notifications and what changed in a course.
+</td>
+<td width="50%" valign="top">
+<h3>LectureTube</h3>
+<b>Find lectures</b><br>
+Search the whole catalogue, including <b>words spoken</b> in captioned lectures.
+<br><br>
+<b>"Listen" to recordings</b><br>
+Transcripts with <code>[hh:mm:ss]</code> timestamps, for LectureTube and for videos uploaded to TUWEL.
+<br><br>
+<b>See the slides</b><br>
+Finds slide changes in the video and shows them next to what was said.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Transcribe anything</b><br>
+Creates captions for the roughly 90% of recordings that have none, in the cloud or locally.
+</td>
+<td width="50%" valign="top">
+<b>Summarise</b><br>
+A whole course or week, combining pages, files and recordings into one summary or exam prep sheet.
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>All tools and prompts</b></summary>
+<br>
 
 **TUWEL:** `list_courses`, `search_courses`, `get_course`, `search_course`, `course_updates`, `list_files`,
-`read_file` (PDF, docx/pptx/xlsx, ODF, ipynb, HTML, code, images), `read_zip`, `read_module`,
-`upcoming_deadlines`, `calendar`, `list_assignments`, `get_assignment`, `get_grades`, `list_forums`,
-`list_discussions`, `read_discussion`, `notifications`, `course_recordings`, `listen_recording`, `summarize`.
-Prompts: `weekly_briefing`, `study_week`, `assignment_helper`, `exam_prep`.
+`read_file`, `read_zip`, `read_module`, `upcoming_deadlines`, `calendar`, `list_assignments`, `get_assignment`,
+`get_grades`, `list_forums`, `list_discussions`, `read_discussion`, `notifications`, `course_recordings`,
+`listen_recording`, `summarize`<br>
+Prompts: `weekly_briefing`, `study_week`, `assignment_helper` (explains, doesn't solve), `exam_prep`
 
-**LectureTube:** `search_lectures` (also searches spoken words), `list_lectures`, `list_series`, `get_series`,
-`get_lecture`, `get_transcript`, `get_slides`, `browse_pages`, `my_profile`, `my_videos`, `my_series`,
-`graphql_query` (read-only). Public lectures work without login. Prompts: `summarize_lecture`, `exam_prep`.
+**LectureTube:** `search_lectures`, `list_lectures`, `list_series`, `get_series`, `get_lecture`, `get_transcript`,
+`get_slides`, `browse_pages`, `my_profile`, `my_videos`, `my_series`, `graphql_query` (read-only).
+Public lectures work without login.<br>
+Prompts: `summarize_lecture`, `exam_prep`
 
-**Both:** `login`, `auth_status`, `logout`, and for recordings:
-- `transcribe_recording`: creates captions from the MP4, either in the cloud or locally (see below).
-- `transcription_status`: waits for a running job and returns the transcript as soon as it is ready.
-  A desktop notification also tells you when a long job finishes (`TRANSCRIBE_NOTIFY=0` turns it off).
-- `analyze_keyframes`: finds slide changes in the video and shows them with what was said at that point.
+**Both:** `login`, `auth_status`, `logout`, `transcribe_recording`, `transcription_status`, `analyze_keyframes`
 
-## Login
-
-`login` opens the TU Wien login page in **your default browser**, using a separate profile. You log in as usual
-(including 2FA); the server never sees your password. Afterwards it reads the session cookies, signs in to TUWEL,
-LectureTube and Opencast, and closes the window. For TUWEL it also gets a Moodle app token, which you can revoke
-under *Preferences → Security keys*.
-
-The session is stored in `~/.config/lecturetube-mcp/session.json` (owner-only). It contains the TU Wien SSO
-cookie, so later logins can run silently. Treat the file like a password. `logout` deletes it.
-
-Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi, …) and Firefox-based ones are supported. To use a
-different browser, set `LECTURETUBE_BROWSER` to its executable.
+</details>
 
 ## Transcription
 
 Only about 8.5% of LectureTube recordings have captions, and videos uploaded to TUWEL have none.
+`transcribe_recording` fills the gap. Claude gets the transcript as soon as it is ready, and you get a desktop
+notification when a long job finishes.
 
-**Cloud (recommended for laptops):** any OpenAI-compatible speech API; the default is Groq
-(`whisper-large-v3-turbo`, about $0.04 per audio hour). Your computer only finds the speech in the audio
-(about 15 CPU-seconds per lecture). Silences are not uploaded. Add a key to the server's environment:
+<p align="center">
+  <img src="assets/transcription-speed.svg" width="880" alt="Time to transcribe one hour of audio: cloud under 20 seconds, local about 7 minutes">
+</p>
+
+<table>
+<tr><th></th><th>Cloud (recommended)</th><th>Local</th></tr>
+<tr><td><b>Speed</b></td><td><b>under 20 s per hour of audio</b></td><td>about 7 min per hour (<code>small</code> model)</td></tr>
+<tr><td><b>Your CPU</b></td><td>a few seconds</td><td>all cores, the whole time</td></tr>
+<tr><td><b>Cost</b></td><td>about $0.04 per hour of audio</td><td>free</td></tr>
+<tr><td><b>Engine</b></td><td>Groq <code>whisper-large-v3-turbo</code>, or any OpenAI-compatible API</td><td>bundled Whisper (whisper.cpp)</td></tr>
+<tr><td><b>Audio leaves your computer</b></td><td>yes, to the provider</td><td>no</td></tr>
+</table>
+
+**Enable the cloud engine:** get a key at [console.groq.com](https://console.groq.com) and save it in
+`~/.config/lecturetube-mcp/transcription.json` (then `chmod 600` it):
 
 ```json
-"tuwel": { "command": "java", "args": ["-jar", "/path/to/tuwel-mcp.jar"], "env": { "TRANSCRIBE_API_KEY": "gsk_…" } }
+{ "apiKey": "gsk_..." }
 ```
 
-or put `{ "apiKey": "gsk_…" }` into `~/.config/lecturetube-mcp/transcription.json` (`chmod 600`).
+> [!IMPORTANT]
+> With the cloud engine the recording's audio is sent to the provider. Course-only recordings can contain other
+> students' voices. Use `engine: local` where that is not acceptable. Nothing is uploaded until you add a key.
 
-> **Privacy:** with the cloud engine the recording's audio is sent to the provider. Use `engine: local` for
-> recordings where that is not acceptable. Uploads only happen once you configure a transcription API key.
+Results are cached, and interrupted jobs resume where they stopped.
 
-**Local:** Whisper (whisper.cpp) is bundled and runs on the CPU. It needs no account, but it keeps all cores
-busy for several minutes (`small`: about 11 minutes for a 90-minute lecture). A GPU build of `whisper-cli` is
-used automatically if it is installed.
+## Login and privacy
 
-Results are cached and resumed after interruptions.
+<p align="center">
+  <img src="assets/login-flow.svg" width="880" alt="Login in four steps: Claude calls login, your default browser opens the TU Wien login page, you sign in including 2FA, the session is stored and the window closes">
+</p>
+
+- **The server never sees your password.** You log in on the real TU Wien page.
+- **Later logins are silent** while your TU Wien session is valid.
+- The session lives in `~/.config/lecturetube-mcp/session.json` (owner-only). Treat it like a password;
+  `logout` deletes it.
+- For TUWEL a Moodle app token is created. You can revoke it under *Preferences > Security keys*.
+- Works with Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi, ...) and Firefox-based ones.
 
 ## Configuration
+
+All optional. Set them as environment variables (or the matching key in `transcription.json`).
 
 | Variable | Purpose |
 |---|---|
 | `TRANSCRIBE_API_KEY` | Enables cloud transcription |
-| `TRANSCRIBE_ENGINE` | `api` or `local` (default engine) |
-| `TRANSCRIBE_API_PROVIDER`, `TRANSCRIBE_API_URL`, `TRANSCRIBE_API_MODEL` | `groq` (default), `openai` or `custom` with a base URL |
-| `TRANSCRIBE_API_FORMAT` | Upload as `flac` (default) or `opus` (about 8× smaller) |
+| `TRANSCRIBE_ENGINE` | Default engine: `api` or `local` |
+| `TRANSCRIBE_API_PROVIDER`, `_URL`, `_MODEL` | `groq` (default), `openai`, or `custom` with your own base URL |
+| `TRANSCRIBE_API_FORMAT` | Upload as `flac` (default) or `opus` (about 8x smaller) |
 | `TRANSCRIBE_WAIT_SECONDS` | How long one tool call waits for a transcript (default 50) |
-| `LECTURETUBE_WHISPER_MODEL` | Local model: tiny, base, small (default), medium, turbo, large |
-| `WHISPER_CLI`, `FFMPEG`, `FFPROBE` | Paths to external tools |
+| `TRANSCRIBE_NOTIFY` | `0` turns desktop notifications off |
+| `LECTURETUBE_WHISPER_MODEL` | Local model: `tiny`, `base`, `small` (default), `medium`, `turbo`, `large` |
+| `WHISPER_CLI`, `FFMPEG`, `FFPROBE` | Paths to external tools (a GPU `whisper-cli` is used automatically) |
 | `LECTURETUBE_BROWSER` | Login browser instead of the system default |
 | `LECTURETUBE_MCP_HOME` | Data folder (default `~/.config/lecturetube-mcp`) |
 | `LECTURETUBE_MEDIA_CACHE_GB` | Video cache limit (default 5) |
 
-Every setting can also go into `transcription.json` (`engine`, `provider`, `apiUrl`, `model`, `audioFormat`, `parallel`).
-
-## CLI
-
-```bash
-java -jar tuwel-mcp.jar login | status | logout | doctor
-java -jar lecturetube-mcp.jar login | status | logout | doctor
-```
+Command line: `java -jar tuwel-mcp.jar login | status | logout | doctor` (same for `lecturetube-mcp.jar`).
 
 ## Development
 
 ```bash
-./gradlew test
+./gradlew test         # run the tests
+./gradlew allJars      # build both jars into build/libs/
+claude --plugin-dir .  # try the plugin with your local build
 ```
 
+<details>
+<summary><b>Project layout</b></summary>
+<br>
+
 ```
+.claude-plugin/           plugin manifest and marketplace entry
+bin/Launcher.java         starts a server from the local build or the matching release jar
 docs/                     API research (OpenAPI for LectureTube and TUWEL, Tobira GraphQL schema)
 src/main/kotlin/dev/
   lecturetubemcp/         LectureTube server
@@ -131,12 +214,12 @@ src/main/kotlin/dev/
     mcp/                  MCP tools
 ```
 
-### Releases
+</details>
 
-Pull requests are tested by the **CI** workflow. A release is created by hand: *Actions → Release → Run workflow*.
-It derives the next version from the [Conventional Commits](https://www.conventionalcommits.org) since the last tag
-(or uses the version you enter), updates `CHANGELOG.md`, tags the commit and publishes both jars as a GitHub release.
-Commit messages therefore follow the format `feat(scope): …`, `fix: …`, `docs: …`.
+**Workflow:** pull requests and every merge to `main` run the tests; Dependabot keeps dependencies current.
+Releases are created by hand (*Actions > Release > Run workflow*): the version and `CHANGELOG.md` are derived from
+[Conventional Commits](https://www.conventionalcommits.org) (`feat(scope): ...`, `fix: ...`, `docs: ...`), and both
+jars are published as a GitHub release.
 
 ## License
 
