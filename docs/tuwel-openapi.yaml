@@ -1,0 +1,435 @@
+openapi: 3.1.0
+info:
+  title: TU Wien TUWEL API (unofficial)
+  version: "2026-11-07"
+  summary: Reverse-engineered docs for the interfaces of TUWEL (Moodle 5.2) relevant to an MCP server.
+  description: |
+    **Unofficial.** These endpoints were documented by probing <https://tuwel.tuwien.ac.at> on 2026-11-07.
+    TU Wien does not guarantee them and they may change without notice. TUWEL is **Moodle 5.2**
+    (`version 2026042004.02`, theme `boost_union`) with the plugin `auth_saml2` for TU Wien SSO.
+
+    ## Interfaces
+
+    | Interface | Path | Auth | Use |
+    |---|---|---|---|
+    | **Web Service REST** | `/webservice/rest/server.php` | WS token | Main API: the `moodle_mobile_app` function set (`wsfunction=…`; exact list: `core_webservice_get_site_info`) |
+    | WS file download | `/webservice/pluginfile.php/…` | WS token (`?token=`) | Course files |
+    | AJAX | `/lib/ajax/service.php` | Session cookie + `sesskey` | Same functions, where they are marked `ajax` |
+    | AJAX (no login) | `/lib/ajax/service-nologin.php` | none | `tool_mobile_get_public_config`, … |
+    | Mobile launch (SSO → token) | `/admin/tool/mobile/launch.php` | Session cookie | Issues a `moodle_mobile_app` token |
+    | Password token | `/login/token.php` | username + password | **Not usable**: TUWEL users log in through SSO |
+    | Moodle REST v2 | `/api/rest/v2/…` | Session | Only 7 endpoints, see `tuwel-moodle-rest-v2.openapi.json` |
+    | Web pages | `/my/`, `/course/view.php`, `/mod/*/view.php`, `/pluginfile.php/…` | Session cookie | HTML |
+
+    ## Authentication
+
+    1. **SSO**: `/auth/saml2/login.php?idp=7bdd808f9f4da82bfe7992e779794b9a` redirects to the TU Wien IdP
+       (`idp.zid.tuwien.ac.at`, SimpleSAMLphp). After login, Moodle sets the cookie `MoodleSessiontuwel`.
+       It is the same IdP as LectureTube, so one IdP session signs in to both
+       (LectureTube uses Shibboleth SPs, TUWEL uses SAML2).
+    2. **WS token from the session**: the mobile service is enabled
+       (`enablemobilewebservice: 1`, `typeoflogin: 2` = browser SSO). Request
+       `GET /admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=<random>&urlscheme=moodlemobile`
+       with the session cookie. It answers `303 Location: moodlemobile://token=<base64>`, where
+       `base64` decodes to `md5(wwwroot + passport) ::: <wstoken> ::: <privatetoken>`.
+       This is the mechanism the official Moodle app uses. The token appears in the user's TUWEL
+       *Preferences → Security keys* and can be revoked there.
+    3. Without a session, `launch.php` redirects (`303`) to `/login/index.php`.
+
+    ## Errors
+    * WS REST returns **HTTP 200** for errors as well. JSON errors look like
+      `{"exception":"…","errorcode":"invalidtoken","message":"…"}`, and without `moodlewsrestformat=json`
+      the error comes as XML `<EXCEPTION>`.
+    * AJAX returns `[{"error":true,"exception":{"errorcode":"servicerequireslogin",…}}]`, or
+      `{"error":"…","errorcode":"invalidsesskey"}`.
+    * Messages are localized (German by default).
+  license:
+    name: Documentation only. Course content is subject to TU Wien terms and the rights of the authors.
+
+servers:
+  - url: https://tuwel.tuwien.ac.at
+
+tags:
+  - name: Web services
+  - name: Files
+  - name: Auth
+  - name: Public
+  - name: Pages
+
+paths:
+  /webservice/rest/server.php:
+    post:
+      tags: [Web services]
+      operationId: callWebService
+      summary: Call a Moodle external function
+      description: |
+        Arguments are form-encoded in PHP array syntax, e.g. `courseids[0]=123&options[0][name]=excludecontents&options[0][value]=1`.
+        Booleans are sent as `1`/`0`. The functions below are those of the `moodle_mobile_app` service
+        that the TUWEL MCP server uses.
+
+        | Function | Purpose | Key arguments |
+        |---|---|---|
+        | `core_webservice_get_site_info` | user id, name, site release, list of allowed functions | – |
+        | `core_course_get_enrolled_courses_by_timeline_classification` | my courses | `classification` = inprogress\|past\|future\|all\|favourites, `limit`, `offset`, `sort` |
+        | `core_enrol_get_users_courses` | my courses (classic) | `userid` |
+        | `core_course_search_courses` | search all courses | `criterianame=search`, `criteriavalue`, `page`, `perpage` |
+        | `core_course_get_courses_by_field` | course details | `field=id`, `value` |
+        | `core_course_get_contents` | sections → modules → files | `courseid`, `options[]` |
+        | `core_course_get_updates_since` | changes since a time | `courseid`, `since` |
+        | `mod_assign_get_assignments` | assignments incl. intro attachments | `courseids[]` |
+        | `mod_assign_get_submission_status` | my submission, grade, feedback | `assignid` |
+        | `core_calendar_get_action_events_by_timesort` | timeline / deadlines | `timesortfrom`, `timesortto`, `limitnum` |
+        | `core_calendar_get_calendar_events` | calendar | `events[courseids][]`, `options[timestart]`, `options[timeend]` |
+        | `gradereport_overview_get_course_grades` | course totals | `userid` |
+        | `gradereport_user_get_grade_items` | grade items of a course | `courseid`, `userid` |
+        | `mod_forum_get_forums_by_courses` | forums | `courseids[]` |
+        | `mod_forum_get_forum_discussions` | discussions | `forumid`, `sortorder`, `page`, `perpage` |
+        | `mod_forum_get_discussion_posts` | posts | `discussionid`, `sortby`, `sortdirection` |
+        | `message_popup_get_popup_notifications` | notifications | `useridto`, `limit`, `offset` |
+        | `mod_lti_get_tool_launch_data` | LTI launch parameters (for example of LectureTube activities) | `toolid` |
+        | `mod_page_get_pages_by_courses`, `mod_resource_get_resources_by_courses`, `mod_url_get_urls_by_courses`, `mod_folder_get_folders_by_courses`, `mod_book_get_books_by_courses`, `mod_label_get_labels_by_courses` | module details | `courseids[]` |
+      security:
+        - wsToken: []
+      parameters:
+        - { name: moodlewsrestformat, in: query, schema: { type: string, enum: [json, xml], default: xml }, description: "Use `json`." }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/WsSiteInfo"
+                - $ref: "#/components/schemas/WsTimelineCourses"
+                - $ref: "#/components/schemas/WsCourseContents"
+                - $ref: "#/components/schemas/WsAssignments"
+                - $ref: "#/components/schemas/WsActionEvents"
+                - $ref: "#/components/schemas/WsGenericCall"
+              discriminator:
+                propertyName: wsfunction
+            examples:
+              siteInfo:
+                value: { wstoken: "<token>", wsfunction: core_webservice_get_site_info, moodlewsrestformat: json }
+              courseContents:
+                value: { wstoken: "<token>", wsfunction: core_course_get_contents, moodlewsrestformat: json, courseid: 12345 }
+              assignments:
+                summary: "courseids[0]=12345"
+                value: { wstoken: "<token>", wsfunction: mod_assign_get_assignments, moodlewsrestformat: json, "courseids[0]": 12345 }
+      responses:
+        "200":
+          description: Function result (JSON), **or** an error object (still HTTP 200).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/WsError"
+                  - type: [object, array]
+              examples:
+                invalidToken:
+                  value: { exception: core\exception\moodle_exception, errorcode: invalidtoken, message: "Ungültiges Token - Token wurde nicht gefunden" }
+            application/xml:
+              schema: { type: string }
+              example: "<EXCEPTION class=\"core\\exception\\moodle_exception\"><ERRORCODE>invalidtoken</ERRORCODE>…"
+
+  /lib/ajax/service.php:
+    post:
+      tags: [Web services]
+      operationId: callAjax
+      summary: Call external functions with the browser session (batch)
+      security:
+        - moodleSession: []
+      parameters:
+        - { name: sesskey, in: query, required: true, schema: { type: string }, description: "From `M.cfg.sesskey` in any logged-in page." }
+        - { name: info, in: query, schema: { type: string }, description: Function name (informational only) }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required: [index, methodname, args]
+                properties:
+                  index: { type: integer }
+                  methodname: { type: string, example: core_course_get_enrolled_courses_by_timeline_classification }
+                  args: { type: object }
+      responses:
+        "200":
+          description: "Array of `{error: false, data}` or `{error: true, exception}`; or an object `{error, errorcode}` for an invalid sesskey."
+          content: { application/json: {} }
+
+  /lib/ajax/service-nologin.php:
+    post:
+      tags: [Public]
+      operationId: callAjaxNoLogin
+      summary: Call public functions without login
+      parameters:
+        - { name: info, in: query, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            example: [{ index: 0, methodname: tool_mobile_get_public_config, args: {} }]
+      responses:
+        "200":
+          description: Public site config (SSO identity providers, mobile settings, MFA flag …)
+          content:
+            application/json:
+              example:
+                - error: false
+                  data:
+                    sitename: TU Wien E-Learning
+                    enablewebservices: 1
+                    enablemobilewebservice: 1
+                    typeoflogin: 2
+                    launchurl: https://tuwel.tuwien.ac.at/admin/tool/mobile/launch.php
+                    identityproviders:
+                      - { name: TU Wien Login, url: "https://tuwel.tuwien.ac.at/auth/saml2/login.php?wants&idp=7bdd808f9f4da82bfe7992e779794b9a&passive=off" }
+                    tool_mfa_enabled: true
+
+  /admin/tool/mobile/launch.php:
+    get:
+      tags: [Auth]
+      operationId: mobileLaunch
+      summary: Exchange a logged-in browser session for a `moodle_mobile_app` WS token
+      security:
+        - moodleSession: []
+      parameters:
+        - { name: service, in: query, required: true, schema: { type: string, const: moodle_mobile_app } }
+        - { name: passport, in: query, required: true, schema: { type: string }, description: Random string chosen by the client }
+        - { name: urlscheme, in: query, schema: { type: string, default: moodlemobile } }
+      responses:
+        "303":
+          description: |
+            Logged in: `Location: moodlemobile://token=<base64(md5(wwwroot+passport):::token:::privatetoken)>`.
+            Not logged in: `Location: https://tuwel.tuwien.ac.at/login/index.php`.
+          headers:
+            Location: { schema: { type: string } }
+
+  /auth/saml2/login.php:
+    get:
+      tags: [Auth]
+      operationId: samlLogin
+      summary: Start TU Wien SSO
+      parameters:
+        - { name: idp, in: query, required: true, schema: { type: string, example: 7bdd808f9f4da82bfe7992e779794b9a } }
+        - { name: wants, in: query, schema: { type: string }, description: Return URL path, e.g. `/my/` }
+        - { name: passive, in: query, schema: { type: string, enum: ["on", "off"] } }
+      responses:
+        "303": { description: "Redirect to idp.zid.tuwien.ac.at; afterwards sets the `MoodleSessiontuwel` cookie" }
+
+  /auth/saml2/sp/metadata.php:
+    get:
+      tags: [Public]
+      operationId: samlMetadata
+      summary: SAML2 SP metadata
+      responses:
+        "200": { description: SAML metadata XML, content: { text/xml: {} } }
+
+  /login/index.php:
+    get:
+      tags: [Auth]
+      operationId: loginPage
+      summary: Login page (SSO button + local login form for non-SSO accounts)
+      responses:
+        "200": { description: HTML, content: { text/html: {} } }
+
+  /login/token.php:
+    post:
+      tags: [Auth]
+      operationId: passwordToken
+      summary: Token via username/password (only for manual Moodle accounts, not SSO users)
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+                service: { type: string, example: moodle_mobile_app }
+      responses:
+        "200":
+          description: "`{token, privatetoken}` or an error such as `missingparam` / `invalidlogin`"
+          content: { application/json: {} }
+
+  /webservice/pluginfile.php/{contextId}/{component}/{fileArea}/{path}:
+    get:
+      tags: [Files]
+      operationId: wsFile
+      summary: Download a course file with the WS token
+      description: |
+        `fileurl` values returned by WS functions point here. Append `?token=<wstoken>`.
+        `/pluginfile.php/…` URLs (from HTML pages) work with the session cookie, or with a token when
+        rewritten to `/webservice/pluginfile.php/…`.
+      security:
+        - wsTokenQuery: []
+      parameters:
+        - { name: contextId, in: path, required: true, schema: { type: integer } }
+        - { name: component, in: path, required: true, schema: { type: string, example: mod_resource } }
+        - { name: fileArea, in: path, required: true, schema: { type: string, example: content } }
+        - { name: path, in: path, required: true, schema: { type: string }, description: "itemid/filepath/filename, e.g. `0/VO01.pdf`" }
+        - { name: forcedownload, in: query, schema: { type: integer, enum: [0, 1] } }
+      responses:
+        "200": { description: File content }
+        "403": { description: No permission }
+        "404": { description: Not found }
+
+  /pluginfile.php/{contextId}/{component}/{fileArea}/{path}:
+    get:
+      tags: [Files]
+      operationId: sessionFile
+      summary: Download a file with the browser session
+      security:
+        - moodleSession: []
+      parameters:
+        - { name: contextId, in: path, required: true, schema: { type: integer } }
+        - { name: component, in: path, required: true, schema: { type: string } }
+        - { name: fileArea, in: path, required: true, schema: { type: string } }
+        - { name: path, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: File content }
+        "303": { description: Redirect to login (not logged in) }
+
+  /api/rest/v2/openapi.json:
+    get:
+      tags: [Public]
+      operationId: moodleRestV2Spec
+      summary: Moodle's own OpenAPI spec for its new REST v2 router (7 endpoints, saved in docs/)
+      responses:
+        "200": { description: OpenAPI 3.1 document, content: { application/json: {} } }
+
+  /my/:
+    get:
+      tags: [Pages]
+      operationId: dashboard
+      summary: Dashboard. 200 when logged in (contains `"sesskey":"…"` in `M.cfg`), 303 to login otherwise
+      security:
+        - moodleSession: []
+      responses:
+        "200": { description: HTML }
+        "303": { description: Redirect to /login/index.php }
+
+  /course/view.php:
+    get:
+      tags: [Pages]
+      operationId: coursePage
+      summary: Course page (HTML)
+      security:
+        - moodleSession: []
+      parameters:
+        - { name: id, in: query, required: true, schema: { type: integer } }
+        - { name: section, in: query, schema: { type: integer } }
+      responses:
+        "200": { description: HTML }
+        "303": { description: Redirect to login }
+
+components:
+  securitySchemes:
+    wsToken:
+      type: apiKey
+      in: query
+      name: wstoken
+      description: "`moodle_mobile_app` token (sent as form field `wstoken` in POST bodies)."
+    wsTokenQuery:
+      type: apiKey
+      in: query
+      name: token
+    moodleSession:
+      type: apiKey
+      in: cookie
+      name: MoodleSessiontuwel
+
+  schemas:
+    WsBase:
+      type: object
+      required: [wstoken, wsfunction]
+      properties:
+        wstoken: { type: string }
+        wsfunction: { type: string }
+        moodlewsrestformat: { type: string, const: json }
+        moodlewssettingfilter: { type: boolean, description: Apply text filters (multilang etc.) }
+        moodlewssettingfileurl: { type: boolean, description: Rewrite file URLs to webservice/pluginfile.php }
+    WsSiteInfo:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - properties: { wsfunction: { const: core_webservice_get_site_info } }
+    WsTimelineCourses:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - properties:
+            wsfunction: { const: core_course_get_enrolled_courses_by_timeline_classification }
+            classification: { type: string, enum: [all, inprogress, future, past, favourites, hidden, allincludinghidden] }
+            limit: { type: integer, default: 0 }
+            offset: { type: integer, default: 0 }
+            sort: { type: string, example: fullname }
+    WsCourseContents:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - properties:
+            wsfunction: { const: core_course_get_contents }
+            courseid: { type: integer }
+            "options[0][name]": { type: string, enum: [excludemodules, excludecontents, includestealthmodules, sectionid, sectionnumber, cmid, modname, modid] }
+            "options[0][value]": { type: string }
+    WsAssignments:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - properties:
+            wsfunction: { const: mod_assign_get_assignments }
+            "courseids[0]": { type: integer }
+    WsActionEvents:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - properties:
+            wsfunction: { const: core_calendar_get_action_events_by_timesort }
+            timesortfrom: { type: integer, description: Unix time }
+            timesortto: { type: integer }
+            limitnum: { type: integer, default: 20 }
+    WsGenericCall:
+      allOf:
+        - $ref: "#/components/schemas/WsBase"
+        - additionalProperties: { type: string }
+          description: Any other function; see the table above.
+    WsError:
+      type: object
+      properties:
+        exception: { type: string }
+        errorcode: { type: string, examples: [invalidtoken, accessexception, invalidparameter, servicerequireslogin, nopermissions] }
+        message: { type: string }
+        debuginfo: { type: [string, "null"] }
+
+    # Selected response shapes
+    CourseSection:
+      type: object
+      description: Item of `core_course_get_contents`
+      properties:
+        id: { type: integer }
+        section: { type: integer, description: Section number (0 = general) }
+        name: { type: string }
+        summary: { type: string, description: HTML }
+        modules: { type: array, items: { $ref: "#/components/schemas/CourseModule" } }
+    CourseModule:
+      type: object
+      properties:
+        id: { type: integer, description: cmid }
+        instance: { type: integer, description: Instance id within the module type (e.g. LTI toolid) }
+        modname: { type: string, examples: [resource, folder, page, url, assign, forum, quiz, lti, label, book, h5pactivity, opencast] }
+        name: { type: string }
+        url: { type: string }
+        description: { type: string, description: HTML (labels carry their content here) }
+        visible: { type: integer }
+        uservisible: { type: boolean }
+        dates: { type: array, items: { type: object, properties: { label: { type: string }, timestamp: { type: integer } } } }
+        completion: { type: integer }
+        completiondata: { type: object, properties: { state: { type: integer } } }
+        contents:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string, enum: [file, url, content] }
+              filename: { type: string }
+              filepath: { type: string }
+              filesize: { type: integer }
+              fileurl: { type: string, description: webservice/pluginfile.php URL (needs `token=`) }
+              mimetype: { type: string }
+              timemodified: { type: integer }

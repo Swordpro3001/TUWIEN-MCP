@@ -1,0 +1,803 @@
+openapi: 3.1.0
+info:
+  title: TU Wien LectureTube API (unofficial)
+  version: "2026-11-07"
+  summary: Reverse-engineered docs for the public interfaces of TU Wien LectureTube.
+  description: |
+    **Unofficial.** These endpoints were documented by probing the public interfaces of
+    <https://video.tuwien.ac.at> on 2026-11-07. TU Wien does not guarantee them and they may
+    change without notice.
+
+    ## Architecture
+    LectureTube has three parts:
+
+    | Component | Host | Role |
+    |---|---|---|
+    | **Tobira v3.15** (Rust, by ELAN e.V.) | `video.tuwien.ac.at` | Video portal. Exposes a **GraphQL API** at `/graphql`, plus RSS feeds and HTML pages. |
+    | **Opencast** (presentation node) | `lecturetube.video.tuwien.ac.at` | Media backend. The **Search REST API** (`/search/*.json`) is publicly readable. |
+    | **CDN** (static files) | `cdn.video.tuwien.ac.at` | Serves MP4, HLS (`.m3u8`), WebVTT captions, thumbnails and slide images. |
+
+    Admin, ingest, Studio and editor live on `admin.lecturetube…` and `ingest.lecturetube…`.
+    They need a staff login and are out of scope here.
+
+    ## Authentication
+    * **Anonymous**: you can read everything whose ACL contains `ROLE_ANONYMOUS`. That was
+      8,667 episodes, 639 series and about 7,500 hours on 2026-11-07.
+    * **Logged in as a student** (verified 2026-11-07): roles `ROLE_USER`, `ROLE_TUWIEN`, `ROLE_STUDENT`.
+      Opencast then shows 14,451 episodes and 1,174 series. The Opencast External API (`/api/*`)
+      stays forbidden: it returns an HTML "Opencast :: Forbidden" page **with HTTP 200**.
+    * **Logged in**: login goes through **Shibboleth SAML** (TU Wien SSO). Tobira does
+      *not* issue its own sessions (`usesTobiraSessions: false`). Every request is
+      authenticated by the Shibboleth SP session cookie (`_shibsession_<hash>`), which the
+      reverse proxy turns into headers. To act as a user, a client has to forward that cookie.
+      Logged-in users also see content restricted to `ROLE_TUWEL`, `ROLE_USER` and course roles.
+    * **Static files** (`authStaticFiles: false`): CDN URLs don't need a token. Anyone who
+      has a track or caption URL can download it.
+
+    ## IDs
+    Tobira IDs are a 2-character type prefix plus an 11-character key:
+
+    | Prefix | Type | Example |
+    |---|---|---|
+    | `ev` | Event (video) | `evKgSNekCVlvX` |
+    | `es` | Event as a search result (same key as `ev`) | `esKgSNekCVlvX` |
+    | `sr` | Series | `srD_IbwaCU8_t` |
+    | `ss` | Series as a search result | `ssD_IbwaCU8_t` |
+    | `re` | Realm (page) | `reAAAAAAAAAAA` (root) |
+    | `pl` | Playlist | — |
+
+    Opencast IDs are UUIDs, e.g. `97c381cc-88f8-44ab-a98e-98d10716e96d`. Tobira resolves
+    them with `eventByOpencastId`, `seriesByOpencastId` and `playlistByOpencastId`. Public
+    page and RSS URLs use the **bare key** without the prefix, e.g. `/!v/KgSNekCVlvX`.
+
+    ## Limits
+    * Opencast Search: `limit` must be ≤ **250** for non-admins. Larger values return HTTP 400.
+    * Tobira `search`: the `search` query returns at most about 30 items and has no paging.
+  contact:
+    name: Unofficial / community documentation
+  license:
+    name: Documentation only. Content on LectureTube is subject to TU Wien terms and per-video licenses.
+
+servers:
+  - url: https://video.tuwien.ac.at
+    description: Tobira portal (GraphQL, feeds, pages)
+
+tags:
+  - name: Tobira GraphQL
+    description: Main API used by the LectureTube web frontend. One endpoint, many operations (see examples).
+  - name: Tobira feeds & pages
+    description: RSS feeds, permalinks, embed player and operational endpoints.
+  - name: Opencast Search
+    description: Public read-only Opencast Search REST API on the presentation node.
+  - name: Static media (CDN)
+    description: Media files. Get the URLs from GraphQL `authorizedData` or the Opencast mediapackage.
+  - name: Auth (Shibboleth)
+    description: TU Wien SSO via the Shibboleth SP.
+
+paths:
+  # ───────────────────────────── Tobira GraphQL ─────────────────────────────
+  /graphql:
+    post:
+      tags: [Tobira GraphQL]
+      operationId: graphql
+      summary: Run a GraphQL query or mutation against Tobira
+      description: |
+        Introspection is enabled. The full schema is in `docs/tobira-schema.graphql`, and an
+        interactive GraphiQL IDE is at `/~graphiql`.
+
+        **Queries that are useful anonymously**
+
+        | Field | Purpose |
+        |---|---|
+        | `search(query, filters)` | Full-text search over events, series, realms and playlists. Matches **caption text** and returns timestamps (`textMatches`). |
+        | `eventById(id)` / `eventByOpencastId(id)` | Event metadata. `authorizedData` returns **media tracks, WebVTT captions and slide segments**. |
+        | `seriesById(id)` / `seriesByOpencastId(id)` | Series metadata and `entries` (all episodes). |
+        | `playlistById(id)` / `playlistByOpencastId(id)` | Playlist and its entries. |
+        | `rootRealm`, `realmByPath(path)`, `realmById(id)` | Browse the page tree (`/lectures/E100`, …) and its content blocks. |
+        | `node(id)` | Relay-style lookup by any Tobira ID. |
+        | `currentUser` | `null` when anonymous. |
+
+        **Queries that require login**: `searchAllEvents`, `searchAllSeries`,
+        `searchAllPlaylists`, `searchKnownUsers`, `knownGroups`, `currentUser.myVideos`,
+        `currentUser.mySeries`, `currentUser.myPlaylists`, `serviceJwt`.
+        Admin only: `adminDashboardInfo`.
+
+        **Mutations** (all require login and write rights): realm/page editing
+        (`addRealm`, `add*Block`, `update*Block`, `removeBlock`, `mountSeries`, …), event and
+        series metadata/ACL updates, `deleteEvent`, `deleteSeries`, playlist CRUD,
+        `createSeries`, `createPlaceholderEvent`.
+
+        **Errors.** GraphQL errors come back with HTTP 200 and an `errors` array, where
+        `extensions.kind` is for example `NOT_AUTHORIZED`. Some invalid field combinations
+        return HTTP 500 with the plain text body `Internal server error`. One example is
+        `numVideos` outside a listing context.
+
+        **Union types.** Use inline fragments. `Event = AuthorizedEvent | NotAllowed`,
+        `VideoListEntry = AuthorizedEvent | NotAllowed | Missing`,
+        `SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults`.
+      security:
+        - {}
+        - shibbolethSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GraphQLRequest"
+            examples:
+              searchLectures:
+                summary: Full-text search (titles, descriptions, caption text)
+                value:
+                  query: |
+                    query Search($q: String!) {
+                      search(query: $q, filters: { itemType: EVENT }) {
+                        __typename
+                        ... on SearchResults {
+                          totalHits
+                          items {
+                            ... on SearchEvent {
+                              id title seriesId seriesTitle creators duration created
+                              thumbnail userIsAuthorized hasPassword
+                              textMatches { start duration text ty }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  variables: { q: "Kipppunkte" }
+              getEventForSummary:
+                summary: Event metadata, media tracks, captions and slide segments
+                value:
+                  query: |
+                    query Event($id: ID!) {
+                      eventById(id: $id) {
+                        __typename
+                        ... on AuthorizedEvent {
+                          id opencastId title description created creators metadata isLive
+                          series { id opencastId title }
+                          syncedData { duration startTime endTime thumbnail audioOnly }
+                          authorizedData {
+                            tracks { uri flavor mimetype resolution isMaster }
+                            captions { uri lang }
+                            segments { uri startTime }
+                          }
+                        }
+                      }
+                    }
+                  variables: { id: "evKgSNekCVlvX" }
+              eventByOpencastId:
+                summary: Resolve an Opencast UUID to a Tobira event
+                value:
+                  query: |
+                    query ($oc: String!) {
+                      eventByOpencastId(id: $oc) { ... on AuthorizedEvent { id title } __typename }
+                    }
+                  variables: { oc: "97c381cc-88f8-44ab-a98e-98d10716e96d" }
+              passwordProtectedEvent:
+                summary: Unlock a password-protected event
+                value:
+                  query: |
+                    query ($id: ID!, $u: String, $p: String) {
+                      eventById(id: $id) {
+                        ... on AuthorizedEvent {
+                          hasPassword
+                          authorizedData(user: $u, password: $p) { tracks { uri } captions { uri lang } }
+                        }
+                      }
+                    }
+                  variables: { id: "evXXXXXXXXXXX", u: "series-id-or-user", p: "secret" }
+              listSeriesEpisodes:
+                summary: All episodes of a series (a course in one semester)
+                value:
+                  query: |
+                    query ($id: ID!) {
+                      seriesById(id: $id) {
+                        id opencastId title description created
+                        entries {
+                          __typename
+                          ... on AuthorizedEvent { id title created creators syncedData { duration } }
+                        }
+                      }
+                    }
+                  variables: { id: "srD_IbwaCU8_t" }
+              browseRealm:
+                summary: Browse the page tree (faculties → institutes → courses)
+                value:
+                  query: |
+                    query ($path: String!) {
+                      realmByPath(path: $path) {
+                        id name path
+                        children { id name path numberOfDescendants }
+                        blocks {
+                          __typename
+                          ... on SeriesBlock { series { id title } }
+                          ... on VideoBlock { event { ... on AuthorizedEvent { id title } } }
+                          ... on TextBlock { content }
+                        }
+                      }
+                    }
+                  variables: { path: "/lectures/E100" }
+              currentUser:
+                summary: Logged-in user and their videos (needs Shibboleth cookie)
+                value:
+                  query: |
+                    {
+                      currentUser {
+                        username displayName email roles canUpload
+                        myVideos(offset: 0, limit: 20) { totalCount items { id title created } }
+                      }
+                    }
+      responses:
+        "200":
+          description: |
+            GraphQL response. The request may still have failed: check `errors`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GraphQLResponse"
+              examples:
+                event:
+                  summary: Event with captions (truncated)
+                  value:
+                    data:
+                      eventById:
+                        __typename: AuthorizedEvent
+                        id: evKgSNekCVlvX
+                        opencastId: 97c381cc-88f8-44ab-a98e-98d10716e96d
+                        title: "Mathematik UND Musik? Persönliche Ansichten zu einer schwierigen Beziehung"
+                        created: "2025-06-16T15:00:00Z"
+                        creators: ["Christian Krattenthaler"]
+                        metadata:
+                          dcterms:
+                            language: ["deu"]
+                            temporal: ["start=2025-06-16T15:00:00Z; end=2025-06-16T17:02:54Z; scheme=W3C-DTF;"]
+                        series:
+                          id: srD_IbwaCU8_t
+                          title: "101.883 Technische Mathematik für Schülerinnen und Schüler (2025S)"
+                        syncedData: { duration: 5724000.0, audioOnly: false }
+                        authorizedData:
+                          tracks:
+                            - uri: https://cdn.video.tuwien.ac.at/static/lecture_tube/engage-player/97c381cc-…/0669f862-…/13451319.segment-0-720p.mp4
+                              flavor: presenter/delivery
+                              mimetype: video/mp4
+                              resolution: [1280, 720]
+                              isMaster: false
+                          captions:
+                            - { uri: "https://cdn.video.tuwien.ac.at/…/captions-86d915e6-….vtt", lang: de }
+                            - { uri: "https://cdn.video.tuwien.ac.at/…/captions-69426795-….vtt", lang: en }
+                          segments: []
+                notLoggedIn:
+                  summary: Field requires login
+                  value:
+                    data: null
+                    errors:
+                      - message: "Not authorized: user is not logged in"
+                        path: [searchAllEvents]
+                        extensions: { kind: NOT_AUTHORIZED, key: mutation.not-logged-in }
+        "405":
+          description: Returned for `/~graphql` (wrong path) or for non-POST methods.
+        "500":
+          description: Plain text `Internal server error`. Usually caused by an invalid field combination.
+          content:
+            text/plain:
+              schema: { type: string, example: Internal server error }
+
+  /~graphiql:
+    get:
+      tags: [Tobira GraphQL]
+      operationId: graphiql
+      summary: Interactive GraphiQL IDE
+      responses:
+        "200": { description: HTML page, content: { text/html: {} } }
+
+  # ───────────────────────────── Tobira feeds & pages ─────────────────────────────
+  /~rss/series/{seriesKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: rssSeries
+      summary: RSS 2.0 / iTunes podcast feed of a series
+      description: Each item links to `/!v/{eventKey}` and includes `media:thumbnail` and the media enclosures.
+      parameters:
+        - $ref: "#/components/parameters/SeriesKey"
+      responses:
+        "200":
+          description: RSS feed
+          content: { application/rss+xml: { schema: { type: string } } }
+        "400":
+          description: "`invalid series ID`. Use the bare key (e.g. `D_IbwaCU8_t`), not `sr…` or the UUID."
+  /~rss/playlist/{playlistKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: rssPlaylist
+      summary: RSS feed of a playlist
+      parameters:
+        - name: playlistKey
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[A-Za-z0-9_-]{11}$" }
+      responses:
+        "200": { description: RSS feed, content: { application/rss+xml: {} } }
+        "400": { description: Invalid playlist ID }
+  /!v/{eventKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: videoPage
+      summary: Video permalink page (SPA)
+      description: You can also pass `:` followed by the Opencast UUID, e.g. `/!v/:97c381cc-…`.
+      parameters:
+        - $ref: "#/components/parameters/EventKey"
+      responses:
+        "200": { description: HTML (single-page app), content: { text/html: {} } }
+  /!s/{seriesKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: seriesPage
+      summary: Series permalink page (SPA)
+      parameters:
+        - $ref: "#/components/parameters/SeriesKey"
+      responses:
+        "200": { description: HTML, content: { text/html: {} } }
+  /!p/{playlistKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: playlistPage
+      summary: Playlist permalink page (SPA)
+      parameters:
+        - name: playlistKey
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: HTML, content: { text/html: {} } }
+  /~embed/!v/{eventKey}:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: embedPlayer
+      summary: Embeddable player (iframe)
+      parameters:
+        - $ref: "#/components/parameters/EventKey"
+      responses:
+        "200": { description: HTML, content: { text/html: {} } }
+  /~search:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: searchPage
+      summary: Search UI page (SPA). Use GraphQL `search` for machine access.
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        "200": { description: HTML, content: { text/html: {} } }
+  /~metrics:
+    get:
+      tags: [Tobira feeds & pages]
+      operationId: metrics
+      summary: Prometheus metrics (publicly exposed)
+      responses:
+        "200":
+          description: Prometheus text format
+          content: { "text/plain; version=0.0.4": { schema: { type: string } } }
+
+  # ───────────────────────────── Auth ─────────────────────────────
+  /Shibboleth.sso/Login:
+    get:
+      tags: [Auth (Shibboleth)]
+      operationId: login
+      summary: Start TU Wien SSO login
+      description: |
+        Redirects to the TU Wien IdP. After a successful login the SP sets a `_shibsession_*`
+        cookie and redirects to `target`. This flow is interactive and may include MFA, so a
+        headless client has to reuse a cookie from a browser session.
+      parameters:
+        - { name: target, in: query, schema: { type: string, default: /~session } }
+      responses:
+        "302": { description: Redirect to IdP }
+  /Shibboleth.sso/Session:
+    get:
+      tags: [Auth (Shibboleth)]
+      operationId: sessionInfo
+      summary: Show the current Shibboleth session (or "A valid session was not found.")
+      responses:
+        "200": { description: HTML summary, content: { text/html: {} } }
+  /Shibboleth.sso/Logout:
+    get:
+      tags: [Auth (Shibboleth)]
+      operationId: logout
+      summary: Log out
+      parameters:
+        - { name: return, in: query, schema: { type: string } }
+      responses:
+        "302": { description: Redirect }
+
+  # ───────────────────────────── Opencast Search ─────────────────────────────
+  /search/episode.json:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+        description: Opencast presentation node
+    get:
+      tags: [Opencast Search]
+      operationId: searchEpisodes
+      summary: Search or list published episodes (full mediapackages)
+      description: |
+        Returns full Opencast mediapackages: tracks, captions (`captions/delivery`, `text/vtt`),
+        attachments (thumbnails, slide previews `presentation/segment+preview`), catalogs
+        (Dublin Core, MPEG-7 segments) and the ACL. Anonymous callers only get episodes
+        readable by `ROLE_ANONYMOUS`.
+
+        Use this endpoint for **bulk enumeration**, which Tobira's GraphQL can't page through.
+      parameters:
+        - { name: id, in: query, description: Episode (mediapackage) UUID, schema: { type: string, format: uuid } }
+        - { name: sid, in: query, description: Series UUID, schema: { type: string, format: uuid } }
+        - { name: q, in: query, description: Free-text query (title, creator, …), schema: { type: string } }
+        - { name: sname, in: query, description: Series name (must be unique), schema: { type: string } }
+        - $ref: "#/components/parameters/OcSort"
+        - $ref: "#/components/parameters/OcLimit"
+        - $ref: "#/components/parameters/OcOffset"
+        - { name: sign, in: query, description: Whether to sign URLs (no effect, the CDN is unsigned), schema: { type: boolean, default: true } }
+        - { name: live, in: query, description: Only live events, schema: { type: boolean } }
+      responses:
+        "200":
+          description: Result page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OcEpisodeSearchResult" }
+        "400":
+          description: "`Only admins are allowed to request more than 250 items.` or `Invalid sort parameter`"
+        "302":
+          description: Never returned for search; for other services (e.g. `/api/*`) anonymous callers get a redirect to Shibboleth.
+  /search/series.json:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+    get:
+      tags: [Opencast Search]
+      operationId: searchSeries
+      summary: Search or list series
+      parameters:
+        - { name: id, in: query, schema: { type: string, format: uuid } }
+        - { name: episodes, in: query, description: "With `id`: include the series' episodes", schema: { type: boolean } }
+        - { name: q, in: query, schema: { type: string } }
+        - $ref: "#/components/parameters/OcSort"
+        - $ref: "#/components/parameters/OcLimit"
+        - $ref: "#/components/parameters/OcOffset"
+      responses:
+        "200":
+          description: Result page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OcSeriesSearchResult" }
+  /api/{path}:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+    get:
+      tags: [Opencast Search]
+      operationId: opencastExternalApi
+      summary: Opencast External API (not available to students)
+      description: |
+        Anonymous callers get a redirect to Shibboleth. Students get HTTP **200 with an HTML
+        "Opencast :: Forbidden" page**. Only staff or admin roles can use it.
+      parameters:
+        - { name: path, in: path, required: true, schema: { type: string } }
+      security:
+        - shibbolethSession: []
+      responses:
+        "200": { description: "JSON for authorized roles, otherwise HTML 'Opencast :: Forbidden'" }
+        "302": { description: Redirect to Shibboleth login (anonymous) }
+  /info/components.json:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+    get:
+      tags: [Opencast Search]
+      operationId: opencastComponents
+      summary: List of Opencast REST services on this node (32, see docs/opencast-components.json)
+      responses:
+        "200": { description: "`{ rest: [{ path, docs, description }] }`", content: { application/json: {} } }
+  /info/me.json:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+    get:
+      tags: [Opencast Search]
+      operationId: opencastMe
+      summary: Current Opencast user and organization info
+      responses:
+        "200":
+          description: "`{ org: {...}, user: {...}, roles: [...] }`"
+          content: { application/json: { schema: { type: object } } }
+  /play/{episodeId}:
+    servers:
+      - url: https://lecturetube.video.tuwien.ac.at
+    get:
+      tags: [Opencast Search]
+      operationId: opencastPlay
+      summary: Redirect to the Opencast Paella player
+      parameters:
+        - { name: episodeId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "307": { description: "Redirect to `/player/ui/watch.html?id={episodeId}`" }
+
+  # ───────────────────────────── CDN ─────────────────────────────
+  /static/lecture_tube/engage-player/{episodeId}/{elementId}/{filename}:
+    servers:
+      - url: https://cdn.video.tuwien.ac.at
+        description: Static media CDN
+    get:
+      tags: [Static media (CDN)]
+      operationId: getMediaFile
+      summary: Download a media element (video, HLS playlist, WebVTT, image)
+      description: |
+        Don't build these URLs yourself. Take them from GraphQL
+        `authorizedData.tracks|captions|segments` or from the Opencast mediapackage.
+        No authentication is needed. Responses are cacheable (`max-age=604800`) and
+        support `Range` requests.
+
+        | Filename pattern | Content |
+        |---|---|
+        | `*.segment-N-720p.mp4`, `*-1080p.mp4` | Progressive MP4 (presenter / presentation) |
+        | `*.m3u8`, `*.variant-N.m3u8` | HLS master and variant playlists |
+        | `captions-*.vtt` | WebVTT captions (served as `text/plain`) |
+        | `*-thumbnail-player.jpg`, `*-thumbnail-search.jpg` | Thumbnails |
+        | `*.segment-N-1080p.jpg` | Slide keyframes (one per detected slide change) |
+        | `*_timelinepreviews.png` | Timeline sprite |
+      parameters:
+        - { name: episodeId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: elementId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: filename, in: path, required: true, schema: { type: string } }
+        - { name: Range, in: header, required: false, schema: { type: string, example: "bytes=0-1048575" } }
+      responses:
+        "200":
+          description: File
+          content:
+            video/mp4: {}
+            application/x-mpegURL: {}
+            text/plain:
+              schema: { type: string, description: WebVTT, example: "WEBVTT\n\n00:01:44.029 --> 00:01:53.481\n Mathematik und Musik, …" }
+            image/jpeg: {}
+            image/png: {}
+        "206": { description: Partial content }
+
+components:
+  securitySchemes:
+    shibbolethSession:
+      type: apiKey
+      in: cookie
+      name: _shibsession_<hash>
+      description: |
+        Shibboleth SP session cookie from an interactive TU Wien SSO login. The real cookie
+        name carries a hash suffix (`_shibsession_64656661756c74…`). Forward all
+        `_shibsession_*` cookies.
+
+  parameters:
+    EventKey:
+      name: eventKey
+      in: path
+      required: true
+      description: Tobira event key (ID without `ev`), or `:` followed by the Opencast UUID.
+      schema: { type: string, example: KgSNekCVlvX }
+    SeriesKey:
+      name: seriesKey
+      in: path
+      required: true
+      description: Tobira series key (ID without `sr`).
+      schema: { type: string, example: D_IbwaCU8_t }
+    OcSort:
+      name: sort
+      in: query
+      description: Sort field with optional direction.
+      schema:
+        type: string
+        enum: [modified, "modified asc", "modified desc", title, "title asc", "title desc", created, "created asc", "created desc"]
+    OcLimit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 250, default: 20 }
+    OcOffset:
+      name: offset
+      in: query
+      description: |
+        Item offset. The Opencast docs call it a page number, but it behaves as an item offset.
+        `total` is capped at 10000 by the search index, but paging beyond 10000 works.
+      schema: { type: integer, minimum: 0, default: 0 }
+
+  schemas:
+    # ── GraphQL envelope ──
+    GraphQLRequest:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string, description: GraphQL document }
+        variables: { type: object, additionalProperties: true }
+        operationName: { type: string }
+    GraphQLResponse:
+      type: object
+      properties:
+        data: { type: [object, "null"], additionalProperties: true }
+        errors:
+          type: array
+          items: { $ref: "#/components/schemas/GraphQLError" }
+    GraphQLError:
+      type: object
+      properties:
+        message: { type: string }
+        locations: { type: array, items: { type: object, properties: { line: { type: integer }, column: { type: integer } } } }
+        path: { type: array, items: { type: [string, integer] } }
+        extensions:
+          type: object
+          properties:
+            kind: { type: string, example: NOT_AUTHORIZED }
+            key: { type: string }
+
+    # ── Selected GraphQL object types (see tobira-schema.graphql for everything) ──
+    AuthorizedEvent:
+      type: object
+      description: GraphQL type `AuthorizedEvent`. A video the caller may at least preview.
+      properties:
+        id: { type: string, example: evKgSNekCVlvX }
+        opencastId: { type: string, format: uuid }
+        isLive: { type: boolean }
+        title: { type: string }
+        description: { type: [string, "null"] }
+        created: { type: string, format: date-time }
+        creators: { type: array, items: { type: string } }
+        metadata:
+          type: object
+          description: "ExtraMetadata: `{ namespace: { key: [values] } }`, e.g. `dcterms.language: [\"deu\"]`, `dcterms.spatial: [\"TUWEL\"]`."
+          additionalProperties: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        readRoles: { type: array, items: { type: string } }
+        previewRoles: { type: array, items: { type: string } }
+        hasPassword: { type: boolean }
+        series: { $ref: "#/components/schemas/SeriesRef" }
+        syncedData: { $ref: "#/components/schemas/SyncedEventData" }
+        authorizedData: { $ref: "#/components/schemas/AuthorizedEventData" }
+        workflowStatus: { type: string, enum: [BUSY, IDLE, UNOBTAINABLE] }
+        jwtForRead: { type: [string, "null"], description: "ES256 JWT `{oc: {\"e:<uuid>\": [\"read\"]}}`. Not needed while static files are unauthenticated." }
+    SyncedEventData:
+      type: [object, "null"]
+      description: "`null` while the event is still processing (WAITING)."
+      properties:
+        updated: { type: string, format: date-time }
+        startTime: { type: [string, "null"], format: date-time }
+        endTime: { type: [string, "null"], format: date-time }
+        duration: { type: number, description: Milliseconds }
+        thumbnail: { type: [string, "null"], format: uri }
+        audioOnly: { type: boolean }
+    AuthorizedEventData:
+      type: [object, "null"]
+      description: "Only present with read access (or with the right `user`/`password` for protected events)."
+      properties:
+        tracks: { type: array, items: { $ref: "#/components/schemas/Track" } }
+        captions: { type: array, items: { $ref: "#/components/schemas/Caption" } }
+        segments: { type: array, items: { $ref: "#/components/schemas/Segment" } }
+    Track:
+      type: object
+      properties:
+        uri: { type: string, format: uri }
+        flavor: { type: string, description: "`presenter/delivery` (camera/main) or `presentation/delivery` (screen/slides)", example: presenter/delivery }
+        mimetype: { type: [string, "null"], enum: [video/mp4, application/x-mpegURL, audio/mp4, null] }
+        resolution: { type: [array, "null"], items: { type: integer }, minItems: 2, maxItems: 2, example: [1280, 720] }
+        isMaster: { type: [boolean, "null"], description: "`true` for the HLS master playlist" }
+    Caption:
+      type: object
+      properties:
+        uri: { type: string, format: uri, description: WebVTT file }
+        lang: { type: [string, "null"], example: de }
+    Segment:
+      type: object
+      description: Slide change detected by Opencast. The image is a keyframe; there is no OCR text.
+      properties:
+        uri: { type: string, format: uri, description: JPEG keyframe }
+        startTime: { type: number, description: Milliseconds from start }
+    SeriesRef:
+      type: [object, "null"]
+      properties:
+        id: { type: string, example: srD_IbwaCU8_t }
+        opencastId: { type: string, format: uuid }
+        title: { type: string }
+    SearchEvent:
+      type: object
+      description: GraphQL type `SearchEvent`, an item in `search` results.
+      properties:
+        id: { type: string, example: esKgSNekCVlvX, description: "Prefix `es`. Replace it with `ev` for `eventById`." }
+        seriesId: { type: [string, "null"] }
+        seriesTitle: { type: [string, "null"] }
+        title: { type: string }
+        description: { type: [string, "null"] }
+        creators: { type: array, items: { type: string } }
+        thumbnail: { type: [string, "null"] }
+        duration: { type: number }
+        created: { type: string, format: date-time }
+        startTime: { type: [string, "null"], format: date-time }
+        endTime: { type: [string, "null"], format: date-time }
+        isLive: { type: boolean }
+        audioOnly: { type: boolean }
+        hasPassword: { type: boolean }
+        userIsAuthorized: { type: boolean }
+        textMatches: { type: array, items: { $ref: "#/components/schemas/TextMatch" } }
+    TextMatch:
+      type: object
+      properties:
+        start: { type: number, description: ms }
+        duration: { type: number, description: ms }
+        text: { type: [string, "null"], description: "Matching caption or slide text with context. `null` with preview-only access." }
+        ty: { type: string, enum: [CAPTION, SLIDE_TEXT] }
+        highlights: { type: array, items: { type: string }, description: "ByteSpan scalars `start-len`" }
+
+    # ── Opencast Search ──
+    OcEpisodeSearchResult:
+      type: object
+      properties:
+        offset: { type: integer }
+        limit: { type: integer }
+        total: { type: integer, example: 8667 }
+        result: { type: array, items: { $ref: "#/components/schemas/OcEpisode" } }
+    OcEpisode:
+      type: object
+      properties:
+        org: { type: string, example: lecture_tube }
+        type: { type: string, example: Episode }
+        live: { type: boolean }
+        modified: { type: string, format: date-time }
+        acl:
+          type: array
+          items: { type: object, properties: { role: { type: string }, action: { type: string }, allow: { type: boolean } } }
+        dc:
+          type: object
+          description: Dublin Core, every value is an array (title, creator, created, language, isPartOf, spatial, temporal, extent, …)
+          additionalProperties: { type: array, items: { type: string } }
+        mediapackage: { $ref: "#/components/schemas/OcMediaPackage" }
+    OcMediaPackage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        series: { type: string, format: uuid }
+        seriestitle: { type: string }
+        start: { type: string, format: date-time }
+        duration: { type: number, description: ms }
+        language: { type: string, example: deu }
+        creators: { type: object, properties: { creator: { oneOf: [{ type: string }, { type: array, items: { type: string } }] } } }
+        media:
+          type: object
+          properties:
+            track:
+              description: A single object or an array (Opencast JSON quirk)
+              oneOf:
+                - { $ref: "#/components/schemas/OcElement" }
+                - { type: array, items: { $ref: "#/components/schemas/OcElement" } }
+        attachments:
+          type: object
+          properties:
+            attachment:
+              oneOf:
+                - { $ref: "#/components/schemas/OcElement" }
+                - { type: array, items: { $ref: "#/components/schemas/OcElement" } }
+        metadata:
+          type: object
+          properties:
+            catalog:
+              description: "`dublincore/episode`, `dublincore/series`, `mpeg-7/segments`"
+              oneOf:
+                - { $ref: "#/components/schemas/OcElement" }
+                - { type: array, items: { $ref: "#/components/schemas/OcElement" } }
+    OcElement:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, description: "Flavor, e.g. `presenter/delivery`, `captions/delivery`, `presentation/segment+preview`" }
+        mimetype: { type: string }
+        url: { type: string, format: uri }
+        ref: { type: string, description: "For segment previews: `track:<id>;time=T01:26:46:400F1000`" }
+        tags: { type: object }
+        duration: { type: number }
+    OcSeriesSearchResult:
+      type: object
+      properties:
+        offset: { type: integer }
+        limit: { type: integer }
+        total: { type: integer, example: 639 }
+        result:
+          type: array
+          items:
+            type: object
+            properties:
+              org: { type: string }
+              modified: { type: string, format: date-time }
+              searchable_acl: { type: object, properties: { read: { type: array, items: { type: string } }, write: { type: array, items: { type: string } } } }
+              dc: { type: object, additionalProperties: { type: array, items: { type: string } } }
