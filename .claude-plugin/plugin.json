@@ -2,8 +2,28 @@
   "name": "tuwien",
   "version": "0.1.0",
   "description": "TU Wien for Claude: TUWEL courses, files, assignments, deadlines and grades, plus LectureTube recordings with transcripts, transcription and slide analysis.",
-  "author": { "name": "Franz Puerto", "url": "https://github.com/Swordpro3001" },
+  "author": {
+    "name": "Franz Puerto",
+    "url": "https://github.com/Swordpro3001"
+  },
   "repository": "https://github.com/Swordpro3001/TUWIEN-MCP",
   "license": "MIT",
-  "keywords": ["tu-wien", "tuwel", "moodle", "lecturetube", "opencast", "transcription"]
+  "keywords": [
+    "tu-wien",
+    "tuwel",
+    "moodle",
+    "lecturetube",
+    "opencast",
+    "transcription"
+  ],
+  "userConfig": {
+    "groqApiKey": {
+      "type": "string",
+      "title": "Groq API key (optional)",
+      "description": "For fast cloud transcription of lectures without captions (under 20 s per hour of audio, about $0.04 per hour). Create a free key at https://console.groq.com/keys and paste it here. Leave it empty to transcribe locally on your computer instead. With a key, the audio of recordings you transcribe is sent to Groq.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    }
+  }
 }

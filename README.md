@@ -131,7 +131,9 @@ notification when a long job finishes.
 <tr><td><b>Audio leaves your computer</b></td><td>yes, to the provider</td><td>no</td></tr>
 </table>
 
-**Enable the cloud engine:** get a key at [console.groq.com](https://console.groq.com) and save it in
+**Enable the cloud engine:** create a key at [console.groq.com/keys](https://console.groq.com/keys).
+With the Claude Code plugin, paste it when Claude Code asks for the *Groq API key* while enabling the plugin
+(it is kept in your system's credential store; leave it empty for local transcription). Otherwise save it in
 `~/.config/lecturetube-mcp/transcription.json` (then `chmod 600` it):
 
 ```json
