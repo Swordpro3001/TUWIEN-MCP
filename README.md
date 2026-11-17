@@ -9,10 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Swordpro3001/TUWIEN-MCP/ci.yml?branch=main&style=flat-square&color=d946ef&label=CI" alt="CI"></a>
-  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=d946ef&label=release" alt="Release"></a>
-  <img src="https://img.shields.io/badge/java-17%2B-d946ef?style=flat-square" alt="Java 17+">
-  <img src="https://img.shields.io/badge/Claude%20Code-plugin-d946ef?style=flat-square" alt="Claude Code plugin">
+  <a href="https://swordpro3001.github.io/TUWIEN-MCP/tests/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswordpro3001.github.io%2FTUWIEN-MCP%2Ftests.json&style=flat-square" alt="Tests: latest results on main"></a>
+  <a href="https://swordpro3001.github.io/TUWIEN-MCP/coverage/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswordpro3001.github.io%2FTUWIEN-MCP%2Fcoverage.json&style=flat-square" alt="Code coverage on main"></a>
+  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=d946ef&label=release" alt="Latest release"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/java-17%2B-d946ef?style=flat-square" alt="Requires Java 17 or newer"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/Claude%20Code-plugin-d946ef?style=flat-square" alt="Install as a Claude Code plugin"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d946ef?style=flat-square" alt="MIT license"></a>
 </p>
 
@@ -222,7 +223,7 @@ src/main/kotlin/dev/
 
 </details>
 
-**Workflow:** pull requests and every merge to `main` run the tests; Dependabot keeps dependencies current.
+**Workflow:** pull requests and every merge to `main` run the tests. After a merge, the [test report](https://swordpro3001.github.io/TUWIEN-MCP/tests/) and [coverage report](https://swordpro3001.github.io/TUWIEN-MCP/coverage/) are published to GitHub Pages; Dependabot keeps dependencies current.
 Releases are created by hand (*Actions > Release > Run workflow*): the version and `CHANGELOG.md` are derived from
 [Conventional Commits](https://www.conventionalcommits.org) (`feat(scope): ...`, `fix: ...`, `docs: ...`), and both
 jars are published as a GitHub release.
