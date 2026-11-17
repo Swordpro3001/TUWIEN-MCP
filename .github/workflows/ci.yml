@@ -51,7 +51,7 @@ jobs:
         run: |
           mkdir -p site
           cp -r build/reports/tests/test site/tests
-          [ -d build/reports/kover/html ] && cp -r build/reports/kover/html site/coverage
+          if [ -d build/reports/kover/html ]; then cp -r build/reports/kover/html site/coverage; fi
           python3 - <<'PY'
           import glob, json, os, xml.etree.ElementTree as ET
           def badge(name, label, message, color):
