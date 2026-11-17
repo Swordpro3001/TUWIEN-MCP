@@ -18,7 +18,7 @@
     <text x="440" y="240" font-size="28" font-weight="700" fill="url(#accent)">1 login</text>
     <text x="440" y="266" font-size="13" fill="#a1a1aa">for TUWEL and LectureTube</text>
     <rect x="574" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="692" y="240" font-size="28" font-weight="700" fill="url(#accent)">40 tools</text>
+    <text x="692" y="240" font-size="28" font-weight="700" fill="url(#accent)">39 tools</text>
     <text x="692" y="266" font-size="13" fill="#a1a1aa">files, deadlines, grades, recordings</text>
   </g>
 </svg>
