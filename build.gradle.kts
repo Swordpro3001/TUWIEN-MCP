@@ -16,12 +16,12 @@ repositories { mavenCentral() }
 
 dependencies {
     implementation("io.modelcontextprotocol:kotlin-sdk-server:0.16.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.3")
     implementation("io.github.givimad:whisper-jni:1.7.1") // bundled whisper.cpp for speech-to-text (runs in a child JVM)
     implementation("org.apache.pdfbox:pdfbox:3.0.8") // TUWEL: read PDFs from courses and ZIP archives
-    runtimeOnly("org.slf4j:slf4j-simple:2.0.17") // logs go to stderr; stdout is reserved for MCP
+    runtimeOnly("org.slf4j:slf4j-simple:2.0.20") // logs go to stderr; stdout is reserved for MCP
     testImplementation(kotlin("test"))
 }
 
