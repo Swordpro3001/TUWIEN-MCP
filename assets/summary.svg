@@ -1,30 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>Animated example: a student asks Claude to summarize Monday's Analysis 2 lecture; Claude reads the transcript and slides and answers with a summary document with timestamps.</title>
   <style>
-    @keyframes bubble { 0%, 0% { opacity: 0; transform: translateY(8px); } 2%, 100% { opacity: 1; transform: none; } }
-    .bubble { animation: bubble 9s ease-out both; }
-    @keyframes type { 0%, 3% { transform: scaleX(1); } 20%, 100% { transform: scaleX(0); } }
-    .cover { transform-box: fill-box; transform-origin: right; animation: type 9s steps(28, end) both; }
+    @keyframes bubble { 0%, 0% { opacity: 0; transform: translateY(8px); } 2%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .bubble { animation: bubble 12s ease-out infinite; }
+    @keyframes type { 0%, 3% { transform: scaleX(1); } 20%, 93% { transform: scaleX(0); } 94%, 100% { transform: scaleX(1); } }
+    .cover { transform-box: fill-box; transform-origin: right; animation: type 12s steps(28, end) infinite; }
     @keyframes caret { 0%, 3% { transform: translateX(0); opacity: 1; } 20% { transform: translateX(340px); opacity: 1; } 22%, 100% { opacity: 0; transform: translateX(340px); } }
-    .caret { animation: caret 9s steps(28, end) both; }
-    @keyframes chip1 { 0%, 24% { opacity: 0; transform: translateY(8px); } 27%, 100% { opacity: 1; transform: none; } }
-    .chip1 { animation: chip1 9s ease-out both; }
-    @keyframes chip2 { 0%, 30% { opacity: 0; transform: translateY(8px); } 33%, 100% { opacity: 1; transform: none; } }
-    .chip2 { animation: chip2 9s ease-out both; }
+    .caret { animation: caret 12s steps(28, end) infinite; }
+    @keyframes chip1 { 0%, 24% { opacity: 0; transform: translateY(8px); } 27%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .chip1 { animation: chip1 12s ease-out infinite; }
+    @keyframes chip2 { 0%, 30% { opacity: 0; transform: translateY(8px); } 33%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .chip2 { animation: chip2 12s ease-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-    .pulse { animation: pulse 1s ease-in-out 5; }
-    @keyframes reply { 0%, 38% { opacity: 0; transform: translateY(8px); } 42%, 100% { opacity: 1; transform: none; } }
-    .reply { animation: reply 9s ease-out both; }
-    @keyframes doc { 0%, 44% { opacity: 0; transform: translateY(8px); } 50%, 100% { opacity: 1; transform: none; } }
-    .doc { animation: doc 9s ease-out both; }
-    @keyframes i0 { 0%, 52% { opacity: 0; transform: translateY(8px); } 56%, 100% { opacity: 1; transform: none; } }
-    .i0 { animation: i0 9s ease-out both; }
-    @keyframes i1 { 0%, 58% { opacity: 0; transform: translateY(8px); } 62%, 100% { opacity: 1; transform: none; } }
-    .i1 { animation: i1 9s ease-out both; }
-    @keyframes i2 { 0%, 64% { opacity: 0; transform: translateY(8px); } 68%, 100% { opacity: 1; transform: none; } }
-    .i2 { animation: i2 9s ease-out both; }
-    @keyframes skeleton { 0%, 72% { opacity: 0; transform: translateY(8px); } 78%, 100% { opacity: 1; transform: none; } }
-    .skeleton { animation: skeleton 9s ease-out both; }
+    .pulse { animation: pulse 1s ease-in-out infinite; }
+    @keyframes reply { 0%, 38% { opacity: 0; transform: translateY(8px); } 42%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .reply { animation: reply 12s ease-out infinite; }
+    @keyframes doc { 0%, 44% { opacity: 0; transform: translateY(8px); } 50%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .doc { animation: doc 12s ease-out infinite; }
+    @keyframes i0 { 0%, 52% { opacity: 0; transform: translateY(8px); } 56%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .i0 { animation: i0 12s ease-out infinite; }
+    @keyframes i1 { 0%, 58% { opacity: 0; transform: translateY(8px); } 62%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .i1 { animation: i1 12s ease-out infinite; }
+    @keyframes i2 { 0%, 64% { opacity: 0; transform: translateY(8px); } 68%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .i2 { animation: i2 12s ease-out infinite; }
+    @keyframes skeleton { 0%, 72% { opacity: 0; transform: translateY(8px); } 78%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .skeleton { animation: skeleton 12s ease-out infinite; }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .cover, .caret { display: none; } }
   </style>
   <defs>
