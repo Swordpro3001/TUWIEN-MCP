@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/mascot.svg" width="150" alt="">
+  <img src="assets/mascot.svg" width="175" alt="">
 </p>
 
 <h1 align="center">TU Wien for Claude</h1>
 
 <p align="center">
-  <img src="assets/hero.svg" width="880" alt="Your courses and lectures, right inside Claude: an hour of audio transcribed in under 20 seconds, one login for TUWEL and LectureTube, 40 tools">
+  <img src="assets/hero.svg" width="880" alt="Your courses and lectures, right inside Claude: an hour of audio transcribed in under 20 seconds, one login for TUWEL and LectureTube, 39 tools">
 </p>
 
 <p align="center">
@@ -20,6 +20,7 @@
   <a href="#install">Install</a> &nbsp;|&nbsp;
   <a href="#what-it-can-do">What it can do</a> &nbsp;|&nbsp;
   <a href="#transcription">Transcription</a> &nbsp;|&nbsp;
+  <a href="#how-it-works">How it works</a> &nbsp;|&nbsp;
   <a href="#login-and-privacy">Login and privacy</a> &nbsp;|&nbsp;
   <a href="#configuration">Configuration</a> &nbsp;|&nbsp;
   <a href=".github/CONTRIBUTING.md">Contributing</a>
@@ -31,6 +32,10 @@ lecture recordings, so you can ask things like:
 > *"What's due this week, and what do I still need to hand in?"*<br>
 > *"Summarise this week's material of Analysis 2, including the lecture recording."*<br>
 > *"Make me an exam prep sheet from all slides and transcripts of 101.883."*
+
+<p align="center">
+  <img src="assets/demo.svg" width="880" alt="Animated example: a student asks what is due this week and what they missed on Monday; Claude calls the TUWEL and LectureTube tools and answers with the open deadlines and a timestamped summary of the lecture">
+</p>
 
 > [!NOTE]
 > Not affiliated with TU Wien. Respect the terms of use and the licenses of the material.
@@ -93,6 +98,10 @@ A whole course or week, combining pages, files and recordings into one summary o
 </tr>
 </table>
 
+<p align="center">
+  <img src="assets/summary.svg" width="880" alt="Animated example: a student asks Claude to summarize Monday's Analysis 2 lecture; Claude reads the transcript and the slides and answers with a summary document: key ideas with timestamps, then a section for the exam">
+</p>
+
 <details>
 <summary><b>All tools and prompts</b></summary>
 <br>
@@ -145,6 +154,15 @@ With the Claude Code plugin, paste it when Claude Code asks for the *Groq API ke
 > students' voices. Use `engine: local` where that is not acceptable. Nothing is uploaded until you add a key.
 
 Results are cached, and interrupted jobs resume where they stopped.
+
+## How it works
+
+<p align="center">
+  <img src="assets/architecture.svg" width="880" alt="Claude talks to the tuwel and lecturetube servers on your computer. They keep the session, transcripts and video cache locally and only connect to TUWEL, LectureTube and the TU Wien login, plus Groq for audio if you added a key">
+</p>
+
+Both servers run on your computer. Only requests to TU Wien leave it, and, if you added a Groq key, the audio of
+recordings you transcribe.
 
 ## Login and privacy
 

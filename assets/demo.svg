@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="380" viewBox="0 0 880 380" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Animated example: a student asks Claude what is due this week; Claude uses the TUWEL and LectureTube tools and answers with deadlines and a timestamped lecture summary.</title>
+  <style>
+    @keyframes bubble { 0%, 0% { opacity: 0; transform: translateY(6px); } 2%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .bubble { animation: bubble 13s ease-out infinite; }
+    @keyframes type { 0%, 3% { transform: scaleX(1); } 20%, 93% { transform: scaleX(0); } 94%, 100% { transform: scaleX(1); } }
+    .cover { transform-box: fill-box; transform-origin: right; animation: type 13s steps(30, end) infinite; }
+    @keyframes caret { 0%, 3% { transform: translateX(0); opacity: 1; } 20% { transform: translateX(380px); opacity: 1; } 22%, 100% { opacity: 0; transform: translateX(380px); } }
+    .caret { animation: caret 13s steps(30, end) infinite; }
+    @keyframes chip1 { 0%, 24% { opacity: 0; transform: translateY(6px); } 27%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .chip1 { animation: chip1 13s ease-out infinite; }
+    @keyframes chip2 { 0%, 30% { opacity: 0; transform: translateY(6px); } 33%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .chip2 { animation: chip2 13s ease-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .pulse { animation: pulse 1s ease-in-out infinite; }
+    @keyframes l0 { 0%, 38% { opacity: 0; transform: translateY(6px); } 41%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l0 { animation: l0 13s ease-out infinite; }
+    @keyframes l1 { 0%, 45% { opacity: 0; transform: translateY(6px); } 48%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l1 { animation: l1 13s ease-out infinite; }
+    @keyframes l2 { 0%, 52% { opacity: 0; transform: translateY(6px); } 55%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l2 { animation: l2 13s ease-out infinite; }
+    @keyframes l3 { 0%, 59% { opacity: 0; transform: translateY(6px); } 62%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l3 { animation: l3 13s ease-out infinite; }
+    @keyframes l4 { 0%, 66% { opacity: 0; transform: translateY(6px); } 69%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l4 { animation: l4 13s ease-out infinite; }
+    @keyframes l5 { 0%, 73% { opacity: 0; transform: translateY(6px); } 76%, 85% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+    .l5 { animation: l5 13s ease-out infinite; }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .cover, .caret { display: none; } }
+  </style>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e11d74" stop-opacity="0.45"/><stop offset="1" stop-color="#e11d74" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6366f1" stop-opacity="0.45"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/></pattern>
+    <clipPath id="frame"><rect width="880" height="380" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="880" height="380" fill="#0b0b12"/>
+    <rect width="880" height="380" fill="url(#grid)"/>
+    <ellipse cx="80" cy="380" rx="300" ry="170" fill="url(#glowA)"/>
+    <ellipse cx="840" cy="0" rx="320" ry="170" fill="url(#glowB)"/>
+    <rect width="880" height="44" fill="#ffffff" fill-opacity="0.03"/>
+    <line x1="0" y1="44" x2="880" y2="44" stroke="#ffffff" stroke-opacity="0.08"/>
+  </g>
+  <rect x="0.5" y="0.5" width="879" height="379" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+  <circle cx="26" cy="22" r="5.5" fill="#ff5f57"/><circle cx="44" cy="22" r="5.5" fill="#febc2e"/><circle cx="62" cy="22" r="5.5" fill="#28c840"/>
+  <text x="440" y="27" text-anchor="middle" font-size="13" fill="#a1a1aa">Claude  ·  tuwien plugin</text>
+
+  <g class="bubble">
+    <rect x="432" y="62" width="420" height="42" rx="14" fill="#27272a" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="452" y="88" font-size="14" fill="#fafafa">What's due this week, and what did I miss on Monday?</text>
+    <rect class="cover" x="452" y="70" width="380" height="26" fill="#27272a"/>
+    <rect class="caret" x="452" y="74" width="2" height="18" fill="#d946ef"/>
+  </g>
+
+  <g class="chip1" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">
+    <rect x="28" y="124" width="236" height="28" rx="14" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12"/>
+    <circle class="pulse" cx="46" cy="138" r="4" fill="#ff3d71"/>
+    <text x="58" y="142" fill="#d4d4d8">tuwel · upcoming_deadlines</text>
+  </g>
+  <g class="chip2" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">
+    <rect x="276" y="124" width="250" height="28" rx="14" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12"/>
+    <circle class="pulse" cx="294" cy="138" r="4" fill="#6366f1"/>
+    <text x="306" y="142" fill="#d4d4d8">lecturetube · get_transcript</text>
+  </g>
+
+  <g class="l0">
+    <rect x="28" y="178" width="44" height="44" rx="12" fill="url(#accent)"/>
+    <text x="50" y="206" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">C</text>
+  </g>
+  <text class="l0" x="92" y="196" font-size="14" font-weight="600" fill="#fafafa">Due this week</text>
+  <text class="l1" x="92" y="220" font-size="13.5" fill="#d4d4d8">•  Exercise sheet 5 (Analysis 2): Thu 23:59, not submitted yet</text>
+  <text class="l2" x="92" y="244" font-size="13.5" fill="#d4d4d8">•  Quiz 3 (Algorithms and Data Structures): Fri 12:00</text>
+  <text class="l3" x="92" y="276" font-size="14" font-weight="600" fill="#fafafa">Monday's lecture, in short</text>
+  <text class="l4" x="92" y="300" font-size="13.5" fill="#d4d4d8">•  [00:12:40]  Pointwise vs. uniform convergence</text>
+  <text class="l5" x="92" y="324" font-size="13.5" fill="#d4d4d8">•  [00:41:05]  Weierstrass M-test, with the worked example</text>
+</svg>

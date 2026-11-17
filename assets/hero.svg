@@ -1,24 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="320" viewBox="0 0 880 320" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-  <defs><linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+  <style>
+    /* One 10 s cycle: text appears and is typed, holds, fades out; the glows keep moving throughout. */
+    .pill, .line1, .s1, .s2, .s3 { animation: 10s ease-out infinite; }
+    .pill { animation-name: pill; }
+    .line1 { animation-name: line1; }
+    .line2 { animation: line2 10s ease-out infinite; }
+    .s1 { animation-name: s1; }
+    .s2 { animation-name: s2; }
+    .s3 { animation-name: s3; }
+    .dot { animation: pulse 1.6s ease-in-out infinite; }
+    .reveal { transform-box: fill-box; transform-origin: left center; animation: reveal 10s steps(20, end) infinite; }
+    .caret { animation: caret 10s steps(20, end) infinite; }
+    .glowA { animation: breathe 7s ease-in-out infinite; }
+    .glowB { animation: breathe 7s ease-in-out -3.5s infinite; }
+    @keyframes pill { 0%, 1% { opacity: 0; transform: translateY(10px); } 6%, 75% { opacity: 1; transform: none; } 83%, 100% { opacity: 0; transform: none; } }
+    @keyframes line1 { 0%, 3% { opacity: 0; transform: translateY(10px); } 9%, 75% { opacity: 1; transform: none; } 83%, 100% { opacity: 0; transform: none; } }
+    @keyframes line2 { 0%, 75% { opacity: 1; } 83%, 100% { opacity: 0; } }
+    @keyframes s1 { 0%, 22% { opacity: 0; transform: translateY(10px); } 28%, 75% { opacity: 1; transform: none; } 83%, 100% { opacity: 0; transform: none; } }
+    @keyframes s2 { 0%, 24% { opacity: 0; transform: translateY(10px); } 30%, 75% { opacity: 1; transform: none; } 83%, 100% { opacity: 0; transform: none; } }
+    @keyframes s3 { 0%, 26% { opacity: 0; transform: translateY(10px); } 32%, 75% { opacity: 1; transform: none; } 83%, 100% { opacity: 0; transform: none; } }
+    @keyframes reveal { 0%, 9% { transform: scaleX(0); } 21%, 90% { transform: scaleX(1); } 91%, 100% { transform: scaleX(0); } }
+    @keyframes caret {
+      0%, 8% { opacity: 0; transform: translateX(0); }
+      9% { opacity: 1; transform: translateX(0); }
+      21% { opacity: 1; transform: translateX(356px); }
+      24% { opacity: 0; } 27% { opacity: 1; } 30% { opacity: 0; } 33% { opacity: 1; }
+      35%, 100% { opacity: 0; transform: translateX(356px); }
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .caret { display: none; } }
+  </style>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
     <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e11d74" stop-opacity="0.55"/><stop offset="1" stop-color="#e11d74" stop-opacity="0"/></radialGradient>
     <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6366f1" stop-opacity="0.5"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.05"/></pattern>
-    <clipPath id="frame"><rect width="880" height="320" rx="20"/></clipPath></defs>
-  <g clip-path="url(#frame)"><rect width="880" height="320" fill="#0b0b12"/><rect width="880" height="320" fill="url(#grid)"/><ellipse cx="170" cy="40" rx="320" ry="200" fill="url(#glowA)"/><ellipse cx="760" cy="300" rx="340" ry="220" fill="url(#glowB)"/></g><rect x="0.5" y="0.5" width="879" height="319" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
-  <rect x="330" y="38" width="220" height="30" rx="15" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.14"/>
-  <circle cx="350" cy="53" r="4" fill="#ff3d71"/>
-  <text x="446" y="58" text-anchor="middle" font-size="13" fill="#d4d4d8">MCP servers for TU Wien</text>
-  <text x="440" y="118" text-anchor="middle" font-size="34" font-weight="700" fill="#fafafa">Your courses and lectures,</text>
-  <text x="440" y="160" text-anchor="middle" font-size="34" font-weight="700" fill="url(#accent)">right inside Claude.</text>
+    <clipPath id="frame"><rect width="880" height="320" rx="20"/></clipPath>
+    <clipPath id="typed"><rect class="reveal" x="262" y="128" width="356" height="44"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="880" height="320" fill="#0b0b12"/>
+    <rect width="880" height="320" fill="url(#grid)"/>
+    <ellipse class="glowA" cx="170" cy="40" rx="320" ry="200" fill="url(#glowA)"/>
+    <ellipse class="glowB" cx="760" cy="300" rx="340" ry="220" fill="url(#glowB)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="879" height="319" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+  <g class="pill">
+    <rect x="330" y="38" width="220" height="30" rx="15" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.14"/>
+    <circle class="dot" cx="350" cy="53" r="4" fill="#ff3d71"/>
+    <text x="446" y="58" text-anchor="middle" font-size="13" fill="#d4d4d8">MCP servers for TU Wien</text>
+  </g>
+  <text class="line1" x="440" y="118" text-anchor="middle" font-size="34" font-weight="700" fill="#fafafa">Your courses and lectures,</text>
+  <text class="line2" x="440" y="160" text-anchor="middle" font-size="34" font-weight="700" fill="url(#accent)" clip-path="url(#typed)">right inside Claude.</text>
+  <rect class="caret" x="262" y="134" width="3" height="34" rx="1.5" fill="#d946ef"/>
   <g text-anchor="middle">
-    <rect x="70" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="188" y="240" font-size="28" font-weight="700" fill="url(#accent)">&lt; 20 s</text>
-    <text x="188" y="266" font-size="13" fill="#a1a1aa">per hour of audio transcribed</text>
-    <rect x="322" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="440" y="240" font-size="28" font-weight="700" fill="url(#accent)">1 login</text>
-    <text x="440" y="266" font-size="13" fill="#a1a1aa">for TUWEL and LectureTube</text>
-    <rect x="574" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="692" y="240" font-size="28" font-weight="700" fill="url(#accent)">40 tools</text>
-    <text x="692" y="266" font-size="13" fill="#a1a1aa">files, deadlines, grades, recordings</text>
+    <g class="s1">
+      <rect x="70" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="188" y="240" font-size="28" font-weight="700" fill="url(#accent)">&lt; 20 s</text>
+      <text x="188" y="266" font-size="13" fill="#a1a1aa">per hour of audio transcribed</text>
+    </g>
+    <g class="s2">
+      <rect x="322" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="440" y="240" font-size="28" font-weight="700" fill="url(#accent)">1 login</text>
+      <text x="440" y="266" font-size="13" fill="#a1a1aa">for TUWEL and LectureTube</text>
+    </g>
+    <g class="s3">
+      <rect x="574" y="200" width="236" height="88" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="692" y="240" font-size="28" font-weight="700" fill="url(#accent)">39 tools</text>
+      <text x="692" y="266" font-size="13" fill="#a1a1aa">files, deadlines, grades, recordings</text>
+    </g>
   </g>
 </svg>

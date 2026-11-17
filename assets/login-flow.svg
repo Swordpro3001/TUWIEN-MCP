@@ -1,39 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="290" viewBox="0 0 880 290" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-  <defs><linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+  <title>Login in four steps: Claude calls login, your default browser opens the TU Wien login page, you sign in including 2FA, the session is stored and the window closes.</title>
+  <style>
+    .draw { stroke-dasharray: 16; }
+    @keyframes card0 { 0%, 2.2% { opacity: 0; transform: translateY(10px); } 7.8%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes card1 { 0%, 8.3% { opacity: 0; transform: translateY(10px); } 13.9%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes card2 { 0%, 14.4% { opacity: 0; transform: translateY(10px); } 20.0%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes card3 { 0%, 20.6% { opacity: 0; transform: translateY(10px); } 26.1%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes line0 { 0%, 6.7% { stroke-dashoffset: 16; opacity: 1; } 10.0%, 80% { stroke-dashoffset: 0; opacity: 1; } 88% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 16; opacity: 0; } }
+    @keyframes head0 { 0%, 8.9% { opacity: 0; transform: translateY(10px); } 12.2%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes line1 { 0%, 12.8% { stroke-dashoffset: 16; opacity: 1; } 16.1%, 80% { stroke-dashoffset: 0; opacity: 1; } 88% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 16; opacity: 0; } }
+    @keyframes head1 { 0%, 15.0% { opacity: 0; transform: translateY(10px); } 18.3%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes line2 { 0%, 18.9% { stroke-dashoffset: 16; opacity: 1; } 22.2%, 80% { stroke-dashoffset: 0; opacity: 1; } 88% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 16; opacity: 0; } }
+    @keyframes head2 { 0%, 21.1% { opacity: 0; transform: translateY(10px); } 24.4%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @keyframes note { 0%, 26.7% { opacity: 0; transform: translateY(10px); } 32.2%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
     <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e11d74" stop-opacity="0.55"/><stop offset="1" stop-color="#e11d74" stop-opacity="0"/></radialGradient>
     <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6366f1" stop-opacity="0.5"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.05"/></pattern>
-    <clipPath id="frame"><rect width="880" height="290" rx="20"/></clipPath></defs>
-  <g clip-path="url(#frame)"><rect width="880" height="290" fill="#0b0b12"/><rect width="880" height="290" fill="url(#grid)"/><ellipse cx="120" cy="290" rx="300" ry="160" fill="url(#glowA)"/><ellipse cx="800" cy="0" rx="300" ry="160" fill="url(#glowB)"/></g><rect x="0.5" y="0.5" width="879" height="289" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+    <clipPath id="frame"><rect width="880" height="290" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="880" height="290" fill="#0b0b12"/>
+    <rect width="880" height="290" fill="url(#grid)"/>
+    <ellipse cx="120" cy="290" rx="300" ry="160" fill="url(#glowA)"/>
+    <ellipse cx="800" cy="0" rx="300" ry="160" fill="url(#glowB)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="879" height="289" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
   <text x="28" y="36" font-size="12" font-weight="600" letter-spacing="1.5" fill="#d946ef">HOW THE LOGIN WORKS</text>
-  <rect x="22" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+  <g style="animation: card0 9s ease-out infinite">
+    <rect x="22" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
     <rect x="40" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
     <text x="57" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">1</text>
     <text x="40" y="140" font-size="16" font-weight="600" fill="#fafafa">Claude calls login</text>
-    <text x="40" y="166" font-size="13" fill="#a1a1aa">when a tool needs it</text>
-    <text x="40" y="185" font-size="13" fill="#a1a1aa">or you ask for it</text>
-    <text x="40" y="204" font-size="13" fill="#a1a1aa"></text>
-  <rect x="240" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="40" y="166" font-size="13" fill="#a1a1aa">when a tool needs it</text><text x="40" y="185" font-size="13" fill="#a1a1aa">or you ask for it</text>
+  </g>
+  <g style="animation: card1 9s ease-out infinite">
+    <rect x="240" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
     <rect x="258" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
     <text x="275" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">2</text>
     <text x="258" y="140" font-size="16" font-weight="600" fill="#fafafa">Browser opens</text>
-    <text x="258" y="166" font-size="13" fill="#a1a1aa">your default browser,</text>
-    <text x="258" y="185" font-size="13" fill="#a1a1aa">separate profile, at the</text>
-    <text x="258" y="204" font-size="13" fill="#a1a1aa">real TU Wien login page</text>
-  <rect x="458" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="258" y="166" font-size="13" fill="#a1a1aa">your default browser,</text><text x="258" y="185" font-size="13" fill="#a1a1aa">separate profile, at the</text><text x="258" y="204" font-size="13" fill="#a1a1aa">real TU Wien login page</text>
+  </g>
+  <g style="animation: card2 9s ease-out infinite">
+    <rect x="458" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
     <rect x="476" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
     <text x="493" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">3</text>
     <text x="476" y="140" font-size="16" font-weight="600" fill="#fafafa">You sign in</text>
-    <text x="476" y="166" font-size="13" fill="#a1a1aa">as usual, including 2FA;</text>
-    <text x="476" y="185" font-size="13" fill="#a1a1aa">the server never sees</text>
-    <text x="476" y="204" font-size="13" fill="#a1a1aa">your password</text>
-  <rect x="676" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="476" y="166" font-size="13" fill="#a1a1aa">as usual, including 2FA;</text><text x="476" y="185" font-size="13" fill="#a1a1aa">the server never sees</text><text x="476" y="204" font-size="13" fill="#a1a1aa">your password</text>
+  </g>
+  <g style="animation: card3 9s ease-out infinite">
+    <rect x="676" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
     <rect x="694" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
     <text x="711" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">4</text>
     <text x="694" y="140" font-size="16" font-weight="600" fill="#fafafa">Session is stored</text>
-    <text x="694" y="166" font-size="13" fill="#a1a1aa">signed in to TUWEL,</text>
-    <text x="694" y="185" font-size="13" fill="#a1a1aa">LectureTube and Opencast;</text>
-    <text x="694" y="204" font-size="13" fill="#a1a1aa">the window closes</text>
-  <path d="M219 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M229 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M437 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M447 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M655 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M665 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="440" y="262" text-anchor="middle" font-size="13" fill="#a1a1aa">Later logins run silently while your TU Wien session is valid.</text>
+    <text x="694" y="166" font-size="13" fill="#a1a1aa">signed in to TUWEL,</text><text x="694" y="185" font-size="13" fill="#a1a1aa">LectureTube and Opencast;</text><text x="694" y="204" font-size="13" fill="#a1a1aa">the window closes</text>
+  </g>
+  <path class="draw" style="animation: line0 9s ease-out infinite" d="M219 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path style="animation: head0 9s ease-out infinite" d="M229 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="draw" style="animation: line1 9s ease-out infinite" d="M437 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path style="animation: head1 9s ease-out infinite" d="M447 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="draw" style="animation: line2 9s ease-out infinite" d="M655 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path style="animation: head2 9s ease-out infinite" d="M665 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text style="animation: note 9s ease-out infinite" x="440" y="262" text-anchor="middle" font-size="13" fill="#a1a1aa">Later logins run silently while your TU Wien session is valid.</text>
 </svg>
