@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/mascot.svg" width="150" alt="">
+</p>
+
 <h1 align="center">TU Wien for Claude</h1>
 
 <p align="center">
