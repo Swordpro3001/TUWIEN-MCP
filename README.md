@@ -15,7 +15,7 @@ Both share one TU Wien login. Recordings without captions can be transcribed, an
 
 ## Quick start
 
-1. **Build** (needs a JDK; the jars run on Java 17+):
+1. **Download** both jars from the [latest release](../../releases/latest), or **build** them (needs a JDK; the jars run on Java 17+):
    ```bash
    ./gradlew allJars          # → build/libs/tuwel-mcp.jar and build/libs/lecturetube-mcp.jar
    ```
@@ -130,3 +130,14 @@ src/main/kotlin/dev/
     files/                PDF / Office / ZIP readers
     mcp/                  MCP tools
 ```
+
+### Releases
+
+Pull requests are tested by the **CI** workflow. A release is created by hand: *Actions → Release → Run workflow*.
+It derives the next version from the [Conventional Commits](https://www.conventionalcommits.org) since the last tag
+(or uses the version you enter), updates `CHANGELOG.md`, tags the commit and publishes both jars as a GitHub release.
+Commit messages therefore follow the format `feat(scope): …`, `fix: …`, `docs: …`.
+
+## License
+
+[MIT](LICENSE)
