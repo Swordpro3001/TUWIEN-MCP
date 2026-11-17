@@ -13,7 +13,6 @@
   <a href="https://swordpro3001.github.io/TUWIEN-MCP/coverage/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswordpro3001.github.io%2FTUWIEN-MCP%2Fcoverage.json&style=flat-square" alt="Code coverage on main"></a>
   <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=d946ef&label=release" alt="Latest release"></a>
   <a href="#install"><img src="https://img.shields.io/badge/java-17%2B-d946ef?style=flat-square" alt="Requires Java 17 or newer"></a>
-  <a href="#install"><img src="https://img.shields.io/badge/Claude%20Code-plugin-d946ef?style=flat-square" alt="Install as a Claude Code plugin"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d946ef?style=flat-square" alt="MIT license"></a>
 </p>
 
@@ -39,20 +38,7 @@ lecture recordings, so you can ask things like:
 
 ## Install
 
-### Claude Code plugin (recommended)
-
-```
-/plugin install tuwien --marketplace Swordpro3001/TUWIEN-MCP
-```
-
-Both servers are added; on first start the plugin downloads the jars of the matching release.
 **Requirements:** Java 17+ and, for transcription and keyframes, [`ffmpeg`](https://ffmpeg.org) on the `PATH`.
-
-Then just ask: *"Log me in to TUWEL and show my courses."*
-
-<details>
-<summary><b>Manual setup</b> (Claude Desktop or other MCP clients)</summary>
-<br>
 
 1. Download `tuwel-mcp.jar` and `lecturetube-mcp.jar` from the [latest release](https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest),
    or build them with `./gradlew allJars` (into `build/libs/`).
@@ -65,10 +51,8 @@ Then just ask: *"Log me in to TUWEL and show my courses."*
      }
    }
    ```
-   Claude Code without the plugin: `claude mcp add tuwel -- java -jar /path/to/tuwel-mcp.jar` (same for `lecturetube`).
+   Claude Code: `claude mcp add tuwel -- java -jar /path/to/tuwel-mcp.jar` (same for `lecturetube`).
 3. Restart the client. `java -jar tuwel-mcp.jar doctor` checks the setup.
-
-</details>
 
 ## What it can do
 
@@ -199,7 +183,6 @@ Command line: `java -jar tuwel-mcp.jar login | status | logout | doctor` (same f
 ```bash
 ./gradlew test         # run the tests
 ./gradlew allJars      # build both jars into build/libs/
-claude --plugin-dir .  # try the plugin with your local build
 ```
 
 <details>
@@ -207,8 +190,6 @@ claude --plugin-dir .  # try the plugin with your local build
 <br>
 
 ```
-.claude-plugin/           plugin manifest and marketplace entry
-bin/Launcher.java         starts a server from the local build or the matching release jar
 docs/                     API research (OpenAPI for LectureTube and TUWEL, Tobira GraphQL schema)
 src/main/kotlin/dev/
   lecturetubemcp/         LectureTube server

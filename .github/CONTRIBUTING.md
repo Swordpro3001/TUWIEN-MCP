@@ -28,7 +28,6 @@ before you write code. Often an existing tool can do it with one more argument.
 
    ```bash
    ./gradlew test allJars
-   claude plugin validate .
    ```
 
 The CI workflow runs the same tests on every pull request and again after the merge.
@@ -61,11 +60,7 @@ Scopes in use: `auth`, `tuwel`, `lecturetube`, `media`, `plugin`, `deps`. A brea
 ```bash
 ./gradlew test          # tests
 ./gradlew allJars       # build/libs/tuwel-mcp.jar and build/libs/lecturetube-mcp.jar
-claude --plugin-dir .   # run the plugin with your local build
 java -jar build/libs/tuwel-mcp.jar doctor
 ```
-
-The plugin launcher (`bin/Launcher.java`) prefers `build/libs/` over the release jars, so a local build is
-picked up without any extra setup.
 
 Releases are made by the maintainer with the manual *Release* workflow.
