@@ -1,0 +1,1489 @@
+# Tobira GraphQL schema of https://video.tuwien.ac.at/graphql (Tobira v3.15)
+# Obtained via introspection on 2026-11-07.
+
+schema { query: Query mutation: Mutation }
+
+type Query {
+  """
+  Returns the main root realm.
+  """
+  rootRealm: Realm!
+  """
+  Returns the realm with the specific ID or `None` if the ID does not
+  refer to a realm.
+  """
+  realmById(id: ID!): Realm
+  """
+  Returns the realm with the given path or `null` if the path does not
+  refer to a realm.
+  
+  Paths with and without trailing slash are accepted and treated equally.
+  The paths `""` and `"/"` refer to the root realm. All other paths have
+  to start with `"/"`. Paths starting with `"/@"` are considered user
+  root realms.
+  """
+  realmByPath(path: String!): Realm
+  """
+  Returns an event by its Opencast ID.
+  """
+  eventByOpencastId(id: String!): Event
+  """
+  Returns an event by its ID.
+  """
+  eventById(id: ID!): Event
+  """
+  Returns a series by its Opencast ID.
+  """
+  seriesByOpencastId(id: String!): Series
+  """
+  Returns a series by its ID.
+  """
+  seriesById(id: ID!): Series
+  """
+  Returns a playlist by its Opencast ID.
+  """
+  playlistByOpencastId(id: String!): Playlist
+  """
+  Returns a playlist by its ID.
+  """
+  playlistById(id: ID!): Playlist
+  """
+  Returns the current user.
+  """
+  currentUser: User
+  """
+  Returns one JWT for each given event (by Opencast IDs), granting the
+  bearer read access to that event. Events that the user is not allowed
+  to read will not appear in the resulting list.
+  """
+  eventReadJwts(events: [String!]!): [EventJwt!]!
+  """
+  Returns a new JWT that can be used to authenticate against Opencast for
+  using the given service. For `service = Editor`, `event` has to be
+  specified.
+  """
+  serviceJwt(service: JwtService!, event: ID, opencastId: String): String!
+  """
+  Retrieve a node by globally unique ID. Mostly useful for relay.
+  """
+  node(id: ID!): Node
+  """
+  Returns `null` if the query is too short.
+  """
+  search(query: String!, filters: Filters!): SearchOutcome!
+  """
+  Searches through events. Results include:
+  
+  - Events that the user has write access to (listed & unlisted).
+  - If `writable_only` is false, this also searches through videos that
+    the user has preview access to. However, unless the user has the
+    privilege to find unlisted events, only listed ones are searched.
+  """
+  searchAllEvents(query: String!, writableOnly: Boolean!, excludeSeriesMembers: Boolean! = false, excludedIds: [String!]! = []): EventSearchOutcome!
+  """
+  Searches through series. Searches through:
+  
+  - Series that the user has write access to (listed & unlisted).
+  - If `writable_only` is false, this also searches through listed series.
+    If the user has the privilege to find unlisted series, all series are
+    searched.
+  """
+  searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
+  """
+  Searches through playlists. Results may include:
+  
+  - Playlists that the user has write access to (listed & unlisted).
+  - If `writable_only` is false, this also searches through listed playlists.
+    If the user has the privilege to find unlisted playlists, all playlists are
+    searched.
+  """
+  searchAllPlaylists(query: String!, writableOnly: Boolean!): PlaylistSearchOutcome!
+  """
+  Searches through all known users. The behavior of this depends on the
+  `general.users_searchable` config value. If it is `false`, this returns
+  only users that have an exact match with the input query. The number of
+  results is limited to some fixed value.
+  """
+  searchKnownUsers(query: String!): KnownUsersSearchOutcome!
+  """
+  Returns all known groups selectable in the ACL UI.
+  """
+  knownGroups: [KnownGroup!]!
+  """
+  Returns information for the admin dashboard.
+  """
+  adminDashboardInfo: AdminInfo
+}
+
+type Mutation {
+  """
+  Adds a new realm.
+  """
+  addRealm(realm: NewRealm!): Realm!
+  """
+  Creates the current users realm. Errors if it already exists.
+  """
+  createMyUserRealm: Realm!
+  """
+  Creates a placeholder event in the DB when a video is uploaded.
+  With that, the event can be listed on the "My videos" page before
+  its processing in Opencast is finished and the event is synced.
+  """
+  createPlaceholderEvent(event: NewEvent!): AuthorizedEvent!
+  """
+  Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
+  is marked as "deletion pending" in Tobira, and fully removed once Opencast
+  finished deleting the event.
+  
+  Returns the deletion timestamp in case of success and errors otherwise.
+  Note that "success" in this case only means the request was successfully sent
+  and accepted, not that the deletion itself succeeded, which is instead checked
+  in subsequent harvesting results.
+  
+  Special case: When a `waiting` event is deleted, this also sends a delete request to OC
+  but removes the event completely from our DB, regardless of that request's response.
+  """
+  deleteEvent(id: ID!): AuthorizedEvent!
+  """
+  Updates the acl of a given event by sending the changes to Opencast.
+  The `acl` parameter can include `read` and `write` roles, as these are the
+  only roles that can be assigned in frontend for now. `preview` and
+  `custom_actions` will be added in the future.
+  If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+  this means it might get overwritten again if the update in Opencast failed for some reason.
+  This solution should be improved in the future.
+  """
+  updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
+  """
+  Updates the title and description of an event. A request for this is sent to Opencast,
+  and the event is optimistically updated in Tobira's DB.
+  """
+  updateEventMetadata(id: ID!, metadata: BasicMetadata!): AuthorizedEvent!
+  """
+  Deletes the given series by sending a delete request to Opencast.
+  The series is marked as "deletion pending" in Tobira and fully removed once Opencast
+  finished deleting the series.
+  
+  Returns the preliminary deletion timestamp.
+  """
+  deleteSeries(id: ID!): Series!
+  """
+  Updates the acl of a given series by sending the changes to Opencast.
+  The `acl` parameter can include `read` and `write` roles.
+  If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+  this means it might get overwritten again if the update in Opencast failed for some reason.
+  """
+  updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
+  """
+  Updates the title and description of a series. A request for this is sent to Opencast,
+  and the series is preliminarily updated in Tobira's DB.
+  """
+  updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEventFromSeries!]!): Series!
+  """
+  Sends an http request to Opencast to create a new series,
+  and stores the series in Tobira's DB.
+  """
+  createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
+  """
+  Creates a new playlist in Opencast and stores it in Tobira's DB.
+  """
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
+  """
+  Updates a playlist's metadata, entries or acl by sending the changes to Opencast
+  and updating the playlist in Tobira's DB.
+  """
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  """
+  Deletes the given playlist by sending a delete request to Opencast.
+  """
+  deletePlaylist(id: ID!): RemovedPlaylist!
+  """
+  Sets the order of all children of a specific realm.
+  
+  `childIndices` must contain at least one element, i.e. do not call this
+  for realms without children.
+  """
+  setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
+  """
+  Changes the name of a realm.
+  """
+  renameRealm(id: ID!, name: UpdatedRealmName!): Realm!
+  """
+  Changes the moderator and/or admin roles of a realm.
+  """
+  updatePermissions(id: ID!, permissions: UpdatedPermissions!): Realm!
+  """
+  Updates a realm's data.
+  """
+  updateRealm(id: ID!, set: UpdateRealm!): Realm!
+  """
+  Remove a realm from the tree.
+  """
+  removeRealm(id: ID!): RemovedRealm!
+  """
+  Adds a title block to a realm.
+  
+  The new block will be inserted at the given index,
+  i.e. it will be at that position after the insert.
+  Or, if you prefer to think about it this way:
+  It will be inserted before the block that currently sits
+  at that index.
+  """
+  addTitleBlock(realm: ID!, index: Int!, block: NewTitleBlock!): Realm!
+  """
+  Adds a text block to a realm.
+  
+  See `addTitleBlock` for more details.
+  """
+  addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
+  """
+  Adds a series block to a realm.
+  
+  See `addTitleBlock` for more details.
+  """
+  addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
+  """
+  Adds a playlist block to a realm.
+  
+  See `addTitleBlock` for more details.
+  """
+  addPlaylistBlock(realm: ID!, index: Int!, block: NewPlaylistBlock!): Realm!
+  """
+  Adds a video block to a realm.
+  
+  See `addTitleBlock` for more details.
+  """
+  addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
+  """
+  Swap two blocks.
+  """
+  swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
+  """
+  Update a title block's data.
+  """
+  updateTitleBlock(id: ID!, set: UpdateTitleBlock!): Block!
+  """
+  Update a text block's data.
+  """
+  updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
+  """
+  Update a series block's data.
+  """
+  updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
+  """
+  Update a playlist block's data.
+  """
+  updatePlaylistBlock(id: ID!, set: UpdatePlaylistBlock!): Block!
+  """
+  Update a video block's data.
+  """
+  updateVideoBlock(id: ID!, set: UpdateVideoBlock!): Block!
+  """
+  Remove a block from a realm.
+  """
+  removeBlock(id: ID!): RemovedBlock!
+  """
+  Basically `mkdir -p` for realms: makes sure the given realm lineage
+  exists, creating the missing realms. Existing realms are *not* updated.
+  Each realm in the given list is the sub-realm of the previous item in
+  the list. The first item is sub-realm of the root realm.
+  """
+  createRealmLineage(realms: [RealmLineageComponent!]!): CreateRealmLineageOutcome!
+  """
+  Stores series information in Tobira's DB, so it can be mounted without having to be harvested first.
+  """
+  announceSeries(series: NewSeries!): Series!
+  """
+  Adds a series block to an empty realm and makes that realm derive its name from said series.
+  """
+  addSeriesMountPoint(seriesOcId: String!, targetPath: String!): Realm!
+  """
+  Removes the series block of given series from the given realm.
+  If the realm has sub-realms and used to derive its name from the block,
+  it is renamed to its path segment. If the realm has no sub-realms,
+  it is removed completely.
+  Errors if the given realm does not have exactly one series block referring to the
+  specified series.
+  """
+  removeSeriesMountPoint(seriesOcId: String!, path: String!): RemoveMountedSeriesOutcome!
+  """
+  Atomically mount a series into an (empty) realm.
+  Creates all the necessary realms on the path to the target
+  and adds a block with the given series at the leaf.
+  """
+  mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
+}
+
+input AclInputEntry {
+  role: String!
+  actions: [String!]!
+}
+
+"""
+A role being granted permission to perform certain actions.
+"""
+type AclItem {
+  """
+  Role. In arrays of AclItems, no two items have the same `role`.
+  """
+  role: String!
+  """
+  List of actions this role can perform (e.g. `read`, `write`,
+  `annotate`). This is a set, i.e. no duplicate elements.
+  """
+  actions: [String!]!
+  """
+  Additional info we have about the role. Is `null` if the role is
+  unknown. For the built-in roles `ROLE_ANONYMOUS`, `ROLE_ADMIN` and
+  `ROLE_USER`, this might be `null` as well (in which case there is
+  special handling in the frontend), but might be non-null if custom info
+  is configured.
+  """
+  info: RoleInfo
+}
+
+type AdminDbInfo {
+  numEvents: Int!
+  numEventsPendingSync: Int!
+  numEventsPendingDeletion: Int!
+  numEventsListed: Int
+  numSeries: Int!
+  numSeriesPendingSync: Int!
+  numSeriesPendingDeletion: Int!
+  numSeriesListed: Int
+  numPlaylists: Int!
+  numPlaylistsListed: Int
+  numRealms: Int!
+  numUserRealms: Int!
+  numBlocks: Int!
+  numKnownUsers: Int!
+  numKnownGroups: Int!
+  numUserSessions: Int!
+  numUserSessionsUnique: Int!
+  dbSize: Float!
+}
+
+type AdminInfo {
+  db: AdminDbInfo!
+  searchIndex: AdminSearchIndexInfo!
+  sync: AdminSyncInfo!
+  problems: AdminProblemInfo!
+  userRealms: [AdminUserRealmInfo!]!
+  userSessions: [UserInfo!]!
+}
+
+type AdminMeiliInfo {
+  version: String!
+  size: Float!
+  lastUpdate: DateTime
+  eventIndex: AdminSingleSearchIndexInfo
+  seriesIndex: AdminSingleSearchIndexInfo
+  playlistIndex: AdminSingleSearchIndexInfo
+  realmIndex: AdminSingleSearchIndexInfo
+  userIndex: AdminSingleSearchIndexInfo
+}
+
+type AdminProblemInfo {
+  realmsBrokenName: [String!]!
+  realmsBrokenBlocks: [String!]!
+}
+
+type AdminSearchIndexInfo {
+  isHealthy: Boolean!
+  meili: AdminMeiliInfo
+  state: String
+  queueLen: Int!
+  queuedEvents: Int!
+  queuedSeries: Int!
+  queuedPlaylists: Int!
+  queuedRealms: Int!
+  queuedUsers: Int!
+}
+
+type AdminSingleSearchIndexInfo {
+  numDocuments: Int!
+  isIndexing: Boolean!
+}
+
+type AdminSyncInfo {
+  ocReachable: Boolean!
+  harvestedUntil: DateTime!
+  lastUpdatedItem: DateTime
+  requiredTobiraApiVersion: String!
+  tobiraApiVersion: String
+  externalApiVersion: String
+}
+
+type AdminUserRealmInfo {
+  path: String!
+  numSubpages: Int!
+  ownerDisplayName: String!
+}
+
+type ArrayMatch {
+  index: Int!
+  span: ByteSpan!
+}
+
+type AuthorizedEvent implements Node {
+  id: ID!
+  opencastId: String!
+  isLive: Boolean!
+  title: String!
+  description: String
+  created: DateTime!
+  creators: [String!]!
+  metadata: ExtraMetadata!
+  """
+  This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+  """
+  readRoles: [String!]!
+  """
+  This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+  """
+  writeRoles: [String!]!
+  """
+  This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+  """
+  previewRoles: [String!]!
+  syncedData: SyncedEventData
+  """
+  Returns the authorized event data if the user has read access or is authenticated for the event.
+  """
+  authorizedData(user: String, password: String): AuthorizedEventData
+  """
+  Whether the current user has write access to this event.
+  """
+  canWrite: Boolean!
+  tobiraDeletionTimestamp: DateTime
+  """
+  Whether the event has active workflows.
+  """
+  workflowStatus: WorkflowStatus!
+  series: Series
+  """
+  Returns a list of realms where this event is referenced (via some kind of block).
+  """
+  hostRealms: [Realm!]!
+  """
+  Whether this event is password protected.
+  """
+  hasPassword: Boolean!
+  acl: [AclItem!]!
+  """
+  Returns `true` if the realm has a video block with this video
+  OR if the realm has a series or playlist block including this video.
+  Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
+  """
+  Returns a JWT that grants read access to static files of this event.
+  Returns `null` if the user does not have access to the event.
+  """
+  jwtForRead: String
+  """
+  Returns a JWT to create a download link (JWT just grants read access).
+  Returns `null` if the user does not have access to the event.
+  """
+  jwtForDownload: String
+}
+
+"""
+Represents event data that is only accessible for users with read access
+and event-specific authenticated users.
+"""
+type AuthorizedEventData {
+  tracks: [Track!]!
+  captions: [Caption!]!
+  segments: [Segment!]!
+}
+
+"""
+Represents an Opencast playlist.
+"""
+type AuthorizedPlaylist implements Node {
+  id: ID!
+  opencastId: String!
+  title: String!
+  description: String
+  creator: String!
+  updated: DateTime!
+  """
+  Returns the number of entries in this playlist. Note: this is lazily loaded
+  and only available in certain contexts (e.g., playlist listings).
+  """
+  numEntries: Int!
+  """
+  Returns a stack of thumbnails from the events in this playlist.
+  This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+  In other contexts the thumbnails will be fetched from the database on demand.
+  """
+  thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
+  """
+  Returns `true` if the realm has a playlist block with this playlist.
+  Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
+  entries: [VideoListEntry!]!
+  hostRealms: [Realm!]!
+  """
+  Whether the current user has write access to this playlist.
+  """
+  canWrite: Boolean!
+}
+
+input BasicMetadata {
+  title: String!
+  description: String
+}
+
+"""
+A `Block`: a UI element that belongs to a realm.
+"""
+interface Block {
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+"""
+A byte range, encoded as two hex numbers separated by `-`.
+"""
+scalar ByteSpan
+
+type Caption {
+  uri: String!
+  lang: String
+}
+
+input ChildIndex {
+  id: ID!
+  index: Int!
+}
+
+type CreateRealmLineageOutcome {
+  numCreated: Int!
+}
+
+"""
+Combined date and time (with time zone) in [RFC 3339][0] format.
+
+Represents a description of an exact instant on the time-line (such as the
+instant that a user account was created).
+
+[`DateTime` scalar][1] compliant.
+
+See also [`chrono::DateTime`][2] for details.
+
+[0]: https://datatracker.ietf.org/doc/html/rfc3339#section-5
+[1]: https://graphql-scalars.dev/docs/scalars/date-time
+[2]: https://docs.rs/chrono/latest/chrono/struct.DateTime.html
+"""
+scalar DateTime
+
+input DisplayOptions {
+  showTitle: Boolean
+  showLink: Boolean
+  showMetadata: Boolean
+}
+
+type EmptyQuery {
+  """
+  Unused dummy field for this marker type. GraphQL requires all objects to
+  have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
+}
+
+union Event = AuthorizedEvent | NotAllowed
+
+type EventConnection {
+  pageInfo: PageInfo!
+  items: [AuthorizedEvent!]!
+  totalCount: Int!
+}
+
+type EventJwt {
+  event: String!
+  jwt: String!
+}
+
+union EventSearchOutcome = SearchUnavailable | EventSearchResults
+
+type EventSearchResults {
+  items: [SearchEvent!]!
+  totalHits: Int!
+  """
+  How long searching took in ms.
+  """
+  duration: Int!
+}
+
+"""
+Represents the `event_state` type defined in `05-events.sql`.
+"""
+enum EventState {
+  READY
+  WAITING
+}
+
+"""
+Arbitrary metadata for events/series. Serialized as JSON object.
+"""
+scalar ExtraMetadata
+
+input Filters {
+  itemType: ItemType
+  start: DateTime
+  end: DateTime
+}
+
+enum ItemType {
+  EVENT
+  SERIES
+  REALM
+}
+
+"""
+Services a user can be pre-authenticated for using a JWT
+"""
+enum JwtService {
+  UPLOAD
+  STUDIO
+  EDITOR
+  MANAGE
+}
+
+"""
+A group selectable in the ACL UI. Basically a mapping from role to a nice
+label and info about the relationship to other roles/groups.
+"""
+type KnownGroup {
+  role: String!
+  label: TranslatedString!
+  implies: [String!]!
+  sortKey: String
+  large: Boolean!
+}
+
+type KnownUser {
+  displayName: String!
+  userRole: String!
+}
+
+type KnownUserSearchResults {
+  items: [KnownUser!]!
+}
+
+union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
+
+type Missing {
+  """
+  Unused dummy field for this marker type. GraphQL requires all objects to
+  have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
+}
+
+input NewEvent {
+  opencastId: OpencastId!
+  title: String!
+  description: String
+  seriesId: ID
+  creators: [String!]!
+  acl: [AclInputEntry!]!
+}
+
+input NewPlaylistBlock {
+  playlist: ID!
+  displayOptions: DisplayOptions!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+}
+
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
+}
+
+input NewSeries {
+  opencastId: OpencastId!
+  title: String!
+  description: String
+}
+
+input NewSeriesBlock {
+  series: ID!
+  displayOptions: DisplayOptions!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+}
+
+input NewTextBlock {
+  content: String!
+}
+
+input NewTitleBlock {
+  content: String!
+}
+
+input NewVideoBlock {
+  event: ID!
+  displayOptions: DisplayOptions!
+}
+
+"""
+A node with a globally unique ID. Mostly useful for relay.
+"""
+interface Node {
+  id: ID!
+}
+
+type NotAllowed {
+  """
+  Unused dummy field for this marker type. GraphQL requires all objects to
+  have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
+}
+
+"""
+Wrapper around Opencast IDs.
+Should prevent using a regular String where an Opencast ID is expected.
+"""
+scalar OpencastId
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+}
+
+"""
+A simple realm name: a fixed string.
+"""
+type PlainRealmName {
+  name: String!
+}
+
+union Playlist = AuthorizedPlaylist | NotAllowed
+
+"""
+A block just showing the list of videos in an Opencast playlist
+"""
+type PlaylistBlock implements Block {
+  playlist: Playlist
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+type PlaylistConnection {
+  pageInfo: PageInfo!
+  items: [AuthorizedPlaylist!]!
+  totalCount: Int!
+}
+
+union PlaylistSearchOutcome = SearchUnavailable | PlaylistSearchResults
+
+type PlaylistSearchResults {
+  items: [SearchPlaylist!]!
+  totalHits: Int!
+  """
+  How long searching took in ms.
+  """
+  duration: Int!
+}
+
+enum PlaylistsSortColumn {
+  TITLE
+  UPDATED
+  ENTRY_COUNT
+}
+
+input PlaylistsSortOrder {
+  column: PlaylistsSortColumn!
+  direction: SortDirection!
+}
+
+type Realm implements Node {
+  id: ID!
+  """
+  The name of this realm or `null` if there is no name (for some reason).
+  To find out why a realm has no name, you have to check `name_source`
+  which gives you the raw information about the realm name.
+  """
+  name: String
+  """
+  The raw information about the name of the realm, showing where the name
+  is coming from and if there is no name, why that is. Can be `null` only for the
+  root realm, must be non-null for all other realms.
+  """
+  nameSource: RealmNameSource
+  """
+  Returns `true` if this is the root of the public realm tree (with path = "/").
+  """
+  isMainRoot: Boolean!
+  """
+  Returns true if this is the root of a user realm tree.
+  """
+  isUserRoot: Boolean!
+  """
+  Returns `true` if this realm is managed by a user (path starting with `/@`).
+  """
+  isUserRealm: Boolean!
+  index: Int!
+  """
+  Specifies how the children of this realm should be ordered (e.g. in the
+  navigation list). That's the responsibility of the frontend.
+  """
+  childOrder: RealmOrder!
+  """
+  Returns the trailing segment of this realm's path, without any instances of `/`.
+  Empty for the main root realm.
+  """
+  pathSegment: String!
+  """
+  Returns the full path of this realm. `"/"` for the main root realm.
+  Otherwise it never has a trailing `/`. For user realms, starts with
+  `/@`.
+  """
+  path: String!
+  """
+  This only returns a value for root user realms, in which case it is
+  the display name of the user who owns this realm. For all other realms,
+  `null` is returned.
+  """
+  ownerDisplayName: String
+  """
+  Info about the navigation UI for this realm.
+  """
+  nav: RealmNav!
+  """
+  Returns the acl of this realm, combining moderator and admin roles and assigns
+  the respective actions that are necessary for UI purposes.
+  """
+  ownAcl: [AclItem!]!
+  """
+  Returns the combined acl of this realm's parent, which effectively contains
+  the acl and inherited acl of each ancestor realm. This is used to display
+  these roles in the permissions UI, where we don't want to show that realm's own
+  flattened acl since that also contains the realm's "regular", i.e. non-inherited
+  acl.
+  """
+  inheritedAcl: [AclItem!]!
+  """
+  Returns the immediate parent of this realm.
+  """
+  parent: Realm
+  """
+  Returns all ancestors between the root realm to this realm
+  (excluding both, the root realm and this realm). It starts with a
+  direct child of the root and ends with the parent of `self`.
+  """
+  ancestors: [Realm!]!
+  """
+  Returns all immediate children of this realm. The children are always
+  ordered by the internal index. If `childOrder` returns an ordering
+  different from `BY_INDEX`, the frontend is supposed to sort the
+  children.
+  """
+  children: [Realm!]!
+  """
+  Returns the (content) blocks of this realm.
+  """
+  blocks: [Block!]!
+  """
+  Returns the number of realms that are descendants of this one
+  (excluding this one). Returns a number ≥ 0.
+  """
+  numberOfDescendants: Int!
+  """
+  Returns whether the current user has the rights to add sub-pages, edit realm content,
+  and edit settings including changing the realm path, deleting the realm and editing
+  the realm's acl.
+  """
+  isCurrentUserPageAdmin: Boolean!
+  """
+  Returns whether the current user has the rights to add sub-pages and edit realm content
+  and non-critical settings.
+  """
+  canCurrentUserModerate: Boolean!
+}
+
+input RealmLineageComponent {
+  name: String!
+  pathSegment: String!
+}
+
+"""
+A realm name that is derived from a block of that realm.
+"""
+type RealmNameFromBlock {
+  block: Block!
+}
+
+union RealmNameSource = PlainRealmName | RealmNameFromBlock
+
+"""
+Information to render the navigation for a single realm.
+"""
+type RealmNav {
+  """
+  Elements above the list, usually current page and parent. Is either
+  0, 1 or 2 elements long. Order is "reversed" in that the last element
+  is rendered first/topmost. The main root realm is treated as parent of
+  user root realms.
+  """
+  header: [RealmNavItem!]!
+  """
+  Main part of the nav: list of realms to navigate to. These are usually
+  the children of the current realm, except for non-root leaf nodes, where
+  it's the siblings (including itself) instead.
+  """
+  list: [RealmNavItem!]!
+  """
+  Dictates in what order the items in `list` should be displayed.
+  """
+  listOrder: RealmOrder!
+}
+
+type RealmNavItem {
+  """
+  Resolved name, like `Realm.name`.
+  """
+  name: String
+  path: String!
+  hasChildren: Boolean!
+}
+
+enum RealmOrder {
+  BY_INDEX
+  ALPHABETIC_ASC
+  ALPHABETIC_DESC
+}
+
+input RealmSpecifier {
+  name: String
+  pathSegment: String!
+}
+
+union RemoveMountedSeriesOutcome = RemovedRealm | RemovedBlock
+
+type RemovedBlock {
+  id: ID!
+  realm: Realm!
+}
+
+input RemovedEventFromSeries {
+  id: ID!
+  """
+  When an event is moved from one series to another,
+  this field is used to specify the new series.
+  """
+  targetSeries: ID
+}
+
+type RemovedPlaylist {
+  id: ID!
+}
+
+type RemovedRealm {
+  parent: Realm
+}
+
+"""
+Some extra information we know about a role.
+"""
+type RoleInfo {
+  """
+  A user-facing label for this role (group or person). If the label does
+  not depend on the language (e.g. a name), `{ "default": "Peter" }` is
+  returned.
+  """
+  label: TranslatedString!
+  """
+  For user roles this is `null`. For groups, it defines a list of other
+  group roles that this role implies. I.e. a user with this role always
+  also has these other roles.
+  """
+  implies: [String!]
+  """
+  Is `true` if this role represents a large group. Used to warn users
+  accidentally giving write access to large groups.
+  """
+  large: Boolean!
+}
+
+type SearchEvent implements Node {
+  id: ID!
+  seriesId: ID
+  seriesTitle: String
+  title: String!
+  description: String
+  creators: [String!]!
+  thumbnail: String
+  duration: Float!
+  created: DateTime!
+  startTime: DateTime
+  endTime: DateTime
+  isLive: Boolean!
+  audioOnly: Boolean!
+  hostRealms: [SearchRealm!]!
+  textMatches: [TextMatch!]!
+  matches: SearchEventMatches!
+  hasPassword: Boolean!
+  userIsAuthorized: Boolean!
+}
+
+type SearchEventMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
+  seriesTitle: [ByteSpan!]!
+  creators: [ArrayMatch!]!
+}
+
+input SearchFilter {
+  title: String
+}
+
+"""
+Return type of the search API. `EmptyQuery` is only returned if the passed
+search query is empty. `SearchUnavailable` is returned if the backend
+search service is, for some reason, not available. Otherwise
+`SearchResults` is returned.
+"""
+union SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults
+
+type SearchPlaylist implements Node {
+  id: ID!
+  opencastId: String!
+  title: String!
+  description: String
+  hostRealms: [SearchRealm!]!
+}
+
+type SearchRealm implements Node {
+  id: ID!
+  name: String
+  path: String!
+  ancestorNames: [String]!
+  matches: SearchRealmMatches!
+}
+
+type SearchRealmMatches {
+  name: [ByteSpan!]!
+}
+
+type SearchResults {
+  items: [Node!]!
+  totalHits: Int!
+  """
+  How long searching took in ms.
+  """
+  duration: Int!
+}
+
+type SearchSeries implements Node {
+  id: ID!
+  opencastId: OpencastId!
+  title: String!
+  description: String
+  hostRealms: [SearchRealm!]!
+  thumbnailStack: ThumbnailStack!
+  matches: SearchSeriesMatches!
+  created: DateTime
+}
+
+type SearchSeriesMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
+}
+
+type SearchUnavailable {
+  """
+  Unused dummy field for this marker type. GraphQL requires all objects to
+  have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
+}
+
+"""
+Represents an Opencast series.
+"""
+type Series implements Node {
+  id: ID!
+  opencastId: String!
+  title: String!
+  created: DateTime
+  updated: DateTime
+  metadata: ExtraMetadata
+  description: String
+  state: SeriesState!
+  """
+  Returns the number of entries in this series. Note: this is lazily loaded
+  and only available in certain contexts (e.g., series listings).
+  """
+  numVideos: Int!
+  """
+  Returns a stack of thumbnails from the events in this series.
+  This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+  In other contexts the thumbnails will be fetched from the database on demand.
+  """
+  thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
+  """
+  Whether the current user has write access to this series.
+  """
+  canWrite: Boolean!
+  tobiraDeletionTimestamp: DateTime
+  hostRealms: [Realm!]!
+  entries: [VideoListEntry!]!
+  """
+  Returns `true` if the realm has a series block with this series.
+  Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
+}
+
+"""
+A block just showing the list of videos in an Opencast series
+"""
+type SeriesBlock implements Block {
+  series: Series
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+type SeriesConnection {
+  pageInfo: PageInfo!
+  items: [Series!]!
+  totalCount: Int!
+}
+
+union SeriesSearchOutcome = SearchUnavailable | SeriesSearchResults
+
+type SeriesSearchResults {
+  items: [SearchSeries!]!
+  totalHits: Int!
+  """
+  How long searching took in ms.
+  """
+  duration: Int!
+}
+
+enum SeriesSortColumn {
+  TITLE
+  CREATED
+  UPDATED
+  EVENT_COUNT
+}
+
+input SeriesSortOrder {
+  column: SeriesSortColumn!
+  direction: SortDirection!
+}
+
+"""
+Represents the different states a series can be in during its lifecycle
+"""
+enum SeriesState {
+  READY
+  WAITING
+}
+
+enum SortDirection {
+  ASCENDING
+  DESCENDING
+}
+
+type SyncedEventData {
+  updated: DateTime!
+  startTime: DateTime
+  endTime: DateTime
+  """
+  Duration in ms.
+  """
+  duration: Float!
+  thumbnail: String
+  audioOnly: Boolean!
+}
+
+enum TextAssetType {
+  CAPTION
+  SLIDE_TEXT
+}
+
+"""
+A block just showing some text.
+"""
+type TextBlock implements Block {
+  content: String!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+"""
+A match inside an event's texts while searching.
+"""
+type TextMatch {
+  """
+  Start of this timespan in number of milliseconds from the beginning of
+  the video.
+  """
+  start: Float!
+  """
+  Duration of this timespan in number of milliseconds.
+  """
+  duration: Float!
+  """
+  The text containing the match, with some context. Is `null` if the user
+  is not allowed to read the event, but only preview it.
+  """
+  text: String
+  """
+  Source of this text.
+  """
+  ty: TextAssetType!
+  """
+  Parts of `text` that should be highlighted.
+  """
+  highlights: [ByteSpan!]!
+}
+
+"""
+Information necessary to render a thumbnail.
+"""
+type ThumbnailInfo {
+  url: String
+  live: Boolean!
+  audioOnly: Boolean!
+  state: EventState!
+}
+
+type ThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
+}
+
+"""
+A block just showing some title.
+"""
+type TitleBlock implements Block {
+  content: String!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+type Track {
+  uri: String!
+  flavor: String!
+  mimetype: String
+  resolution: [Int!]
+  isMaster: Boolean
+}
+
+"""
+A string specified in different languages. Entry 'default' is required.
+"""
+scalar TranslatedString
+
+input UpdatePlaylistBlock {
+  playlist: ID
+  displayOptions: DisplayOptions!
+  order: VideoListOrder
+  layout: VideoListLayout
+}
+
+input UpdateRealm {
+  parent: ID
+  pathSegment: String
+}
+
+input UpdateSeriesBlock {
+  series: ID
+  displayOptions: DisplayOptions!
+  order: VideoListOrder
+  layout: VideoListLayout
+}
+
+input UpdateTextBlock {
+  content: String
+}
+
+input UpdateTitleBlock {
+  content: String
+}
+
+input UpdateVideoBlock {
+  event: ID
+  displayOptions: DisplayOptions!
+}
+
+input UpdatedPermissions {
+  moderatorRoles: [String!]
+  adminRoles: [String!]
+}
+
+"""
+Exactly one of `plain` or `block` has to be non-null.
+"""
+input UpdatedRealmName {
+  plain: String
+  block: ID
+}
+
+type User {
+  """
+  The username, a unique string identifying the user.
+  """
+  username: String!
+  email: String
+  """
+  Roles of the user. Note: the frontend should not do any role matching itself,
+  but should rely on Boolean API endpoints like `canUpload` or `event.canWrite`.
+  This endpoint is only for debugging and for special cases like the ACL selector.
+  """
+  roles: [String!]!
+  """
+  Returns the *user role* of this user. Each user has exactly one and this
+  role is used in ACLs to give access to a single user. This role is
+  always also contained in `roles`.
+  """
+  userRole: String!
+  """
+  The name of the user intended to be read by humans.
+  """
+  displayName: String!
+  """
+  The part of the user realm path after `@`, i.e. `/@${user_realm_handle}`.
+  Equals the username, unless overwritten by the auth integration.
+  """
+  userRealmHandle: String!
+  """
+  `True` if the user has the permission to upload videos.
+  """
+  canUpload: Boolean!
+  """
+  `True` if the user has the permission to use Opencast Studio.
+  """
+  canUseStudio: Boolean!
+  """
+  `True` if the user has the permission to use Opencast Editor.
+  """
+  canUseEditor: Boolean!
+  canCreateUserRealm: Boolean!
+  """
+  `True` if the user is allowed to find unlisted items when editing page content.
+  """
+  canFindUnlisted: Boolean!
+  """
+  `True` if the user has the permission to create new series.
+  """
+  canCreateSeries: Boolean!
+  """
+  `True` if the user has the permission to create new playlists.
+  """
+  canCreatePlaylists: Boolean!
+  """
+  `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
+  configured Tobira admin role.
+  """
+  isTobiraAdmin: Boolean!
+  """
+  Returns all events that somehow "belong" to the user, i.e. that appear
+  on the "my videos" page. This also returns events that have been marked
+  as deleted (meaning their deletion in Opencast has been requested but they
+  are not yet removed from Tobira's database).
+  """
+  myVideos(order: VideosSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): EventConnection!
+  """
+  Returns all series that somehow "belong" to the user, i.e. that appear
+  on the "my series" page.
+  """
+  mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): SeriesConnection!
+  """
+  Returns all playlists that somehow "belong" to the user, i.e. that appear
+  on the "my playlists" page.
+  """
+  myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
+}
+
+type UserInfo {
+  username: String!
+  sessions: [UserSessionInfo!]!
+}
+
+type UserSessionInfo {
+  displayName: String!
+  roles: [String!]!
+  created: DateTime!
+  email: String
+  userRole: String!
+  userRealmHandle: String
+}
+
+"""
+A block for presenting a single Opencast event
+"""
+type VideoBlock implements Block {
+  event: Event
+  showTitle: Boolean!
+  showLink: Boolean!
+  showMetadata: Boolean!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
+union VideoListEntry = AuthorizedEvent | NotAllowed | Missing
+
+enum VideoListLayout {
+  SLIDER
+  GALLERY
+  LIST
+}
+
+enum VideoListOrder {
+  NEW_TO_OLD
+  OLD_TO_NEW
+  AZ
+  ZA
+  ORIGINAL
+}
+
+enum VideosSortColumn {
+  TITLE
+  CREATED
+  UPDATED
+  SERIES
+}
+
+input VideosSortOrder {
+  column: VideosSortColumn!
+  direction: SortDirection!
+}
+
+enum WorkflowStatus {
+  BUSY
+  IDLE
+  UNOBTAINABLE
+}
+
