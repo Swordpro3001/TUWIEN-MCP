@@ -34,9 +34,55 @@ jobs:
       - name: Test
         run: ./gradlew test allJars
 
+      - name: Coverage
+        if: github.event_name == 'push'
+        run: ./gradlew koverHtmlReport koverXmlReport
+
       - name: Upload test reports
-        if: failure()
-        uses: actions/upload-artifact@v4
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
         with:
           name: test-reports
           path: build/reports/tests/test
+
+      # Reports go to GitHub Pages so the README badges can link to them; artifacts are zip downloads.
+      - name: Build report site
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          mkdir -p site
+          cp -r build/reports/tests/test site/tests
+          [ -d build/reports/kover/html ] && cp -r build/reports/kover/html site/coverage
+          python3 - <<'PY'
+          import glob, json, os, xml.etree.ElementTree as ET
+          def badge(name, label, message, color):
+              json.dump({"schemaVersion": 1, "label": label, "message": message, "color": color}, open(f"site/{name}.json", "w"))
+          tests = failed = 0
+          for f in glob.glob("build/test-results/test/*.xml"):
+              r = ET.parse(f).getroot()
+              tests += int(r.get("tests")); failed += int(r.get("failures")) + int(r.get("errors"))
+          badge("tests", "tests", f"{failed} failed" if failed else f"{tests} passed", "red" if failed else "brightgreen")
+          if os.path.exists("build/reports/kover/report.xml"):
+              c = next(c for c in ET.parse("build/reports/kover/report.xml").getroot().findall("counter") if c.get("type") == "LINE")
+              pct = 100 * int(c.get("covered")) / (int(c.get("covered")) + int(c.get("missed")))
+              badge("coverage", "coverage", f"{pct:.1f}%", "brightgreen" if pct >= 80 else "yellow" if pct >= 50 else "orange")
+          PY
+          echo '<!doctype html><title>TU Wien for Claude: reports</title><h1>Reports of the latest run on main</h1><ul><li><a href="tests/">Tests</a></li><li><a href="coverage/">Coverage</a></li></ul>' > site/index.html
+
+      - uses: actions/upload-pages-artifact@v5
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        with:
+          path: site
+
+  reports:
+    needs: test
+    if: ${{ !cancelled() && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
