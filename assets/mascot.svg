@@ -10,7 +10,13 @@
       36% { transform: rotate(-150deg); }
       46%, 100% { transform: rotate(0deg); }
     }
-    @media (prefers-reduced-motion: reduce) { .wave { animation: none; } }
+    /* Between waves: the belly gently expands twice, the body rises barely (same 5 s rhythm). */
+    .breathe, .belly { transform-box: fill-box; animation: 5s ease-in-out infinite; }
+    .breathe { transform-origin: 50% 100%; animation-name: rise; }
+    .belly { transform-origin: 50% 50%; animation-name: belly; }
+    @keyframes rise { 0%, 48%, 74%, 100% { transform: scaleY(1); } 61%, 87% { transform: scaleY(1.01); } }
+    @keyframes belly { 0%, 48%, 74%, 100% { transform: scale(1); } 61%, 87% { transform: scale(1.04); } }
+    @media (prefers-reduced-motion: reduce) { .wave, .breathe, .belly { animation: none; } }
   </style>
   <defs>
     <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
@@ -27,6 +33,7 @@
   <!-- shadow -->
   <ellipse cx="120" cy="222" rx="58" ry="7" fill="#000" opacity="0.15"/>
 
+  <g class="breathe">
   <!-- ear tufts -->
   <path d="M72 70 L64 34 L98 58 Z" fill="#d946ef"/>
   <path d="M168 70 L176 34 L142 58 Z" fill="#a855f7"/>
@@ -39,11 +46,13 @@
   <path class="wave" d="M186 118 C206 140 202 180 174 196 C178 170 176 142 166 124 Z" fill="url(#wing)"/>
 
   <!-- belly -->
+  <g class="belly">
   <ellipse cx="120" cy="164" rx="40" ry="42" fill="#ffffff" opacity="0.18"/>
   <g fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round">
     <path d="M104 150 l6 6 l6 -6"/><path d="M124 150 l6 6 l6 -6"/>
     <path d="M114 170 l6 6 l6 -6"/>
     <path d="M104 188 l6 6 l6 -6"/><path d="M124 188 l6 6 l6 -6"/>
+  </g>
   </g>
 
   <!-- headphones -->
@@ -77,4 +86,5 @@
   <circle cx="120" cy="40" r="4" fill="#fbbf24"/>
   <path d="M120 40 L156 52 L156 72" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
   <path d="M152 70 L156 84 L160 70 Z" fill="#fbbf24"/>
+  </g>
 </svg>
