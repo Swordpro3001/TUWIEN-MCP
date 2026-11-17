@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   # Superseded pull request runs are cancelled; every run on main finishes.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
