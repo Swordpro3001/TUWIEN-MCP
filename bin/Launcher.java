@@ -9,13 +9,16 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Starts an MCP server of the Claude plugin: java Launcher.java <tuwel|lecturetube> <pluginRoot> <pluginData>.
  * Uses build/libs/<server>-mcp.jar of a local build if present, otherwise the jar of the GitHub release that matches
- * the plugin version, downloaded once into the plugin data folder. Only stderr is used: stdout carries MCP messages.
+ * the plugin version, downloaded once into the plugin data folder and checked against the SHA-256 the release
+ * workflow recorded in .claude-plugin/jars.sha256. Only stderr is used: stdout carries MCP messages.
  */
 public class Launcher {
     static final String RELEASES = "https://github.com/Swordpro3001/TUWIEN-MCP/releases/download/";
@@ -31,7 +34,7 @@ public class Launcher {
         if (!Files.isRegularFile(jar)) {
             String version = version(root);
             jar = data.resolve("jars").resolve(version).resolve(jarName);
-            if (!Files.isRegularFile(jar)) download(RELEASES + "v" + version + "/" + jarName, jar);
+            if (!Files.isRegularFile(jar)) download(RELEASES + "v" + version + "/" + jarName, jar, expectedSha256(root, jarName));
         }
         try (URLClassLoader loader = new URLClassLoader(new URL[] {jar.toUri().toURL()}, Launcher.class.getClassLoader().getParent())) {
             Thread.currentThread().setContextClassLoader(loader);
@@ -47,7 +50,18 @@ public class Launcher {
         return m.group(1);
     }
 
-    static void download(String url, Path target) throws Exception {
+    static String expectedSha256(Path root, String jarName) throws Exception {
+        Path sums = root.resolve(".claude-plugin/jars.sha256");
+        if (Files.isRegularFile(sums)) {
+            for (String line : Files.readAllLines(sums)) {
+                String[] parts = line.trim().split("\\s+");
+                if (parts.length == 2 && parts[1].equals(jarName)) return parts[0].toLowerCase();
+            }
+        }
+        throw new IllegalStateException("No checksum for " + jarName + " in " + sums + "; refusing to run an unverified download.");
+    }
+
+    static void download(String url, Path target, String sha256) throws Exception {
         System.err.println("Downloading " + url);
         Files.createDirectories(target.getParent());
         HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
@@ -56,6 +70,11 @@ public class Launcher {
         Path tmp = Files.createTempFile(target.getParent(), "download", ".tmp");
         try (InputStream in = resp.body()) {
             Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
+        }
+        String actual = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(tmp)));
+        if (!actual.equals(sha256)) {
+            Files.delete(tmp);
+            throw new IllegalStateException("Checksum mismatch for " + url + ": expected " + sha256 + ", got " + actual);
         }
         Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
