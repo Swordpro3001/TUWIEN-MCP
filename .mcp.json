@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "tuwel": {
+      "command": "java",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java", "tuwel", "${CLAUDE_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_DATA}"]
+    },
+    "lecturetube": {
+      "command": "java",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java", "lecturetube", "${CLAUDE_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_DATA}"]
+    }
+  }
+}
