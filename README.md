@@ -175,7 +175,8 @@ Results are cached, and interrupted jobs resume where they stopped.
 
 ## Configuration
 
-All optional. Set them as environment variables (or the matching key in `transcription.json`).
+All optional. Set them as environment variables. `transcription.json` supports only `engine`, `provider`,
+`apiUrl`, `apiKey`, `model`, `pricePerHour`, `parallel`, and `audioFormat`; the other settings below are environment-only.
 
 | Variable | Purpose |
 |---|---|
