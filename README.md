@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/mascot.svg" width="150" alt="">
+  <img src="assets/mascot.svg" width="175" alt="">
 </p>
 
 <h1 align="center">TU Wien for Claude</h1>
