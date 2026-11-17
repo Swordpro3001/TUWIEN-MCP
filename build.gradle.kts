@@ -8,7 +8,8 @@ plugins {
 }
 
 group = "dev.lecturetubemcp"
-version = "0.1.0"
+// Set by the release workflow: ./gradlew allJars -PreleaseVersion=1.2.3
+version = providers.gradleProperty("releaseVersion").getOrElse("0.0.0-dev")
 
 repositories { mavenCentral() }
 
@@ -35,6 +36,7 @@ application { mainClass.set("dev.lecturetubemcp.MainKt") }
 // LectureTube MCP server → build/libs/lecturetube-mcp.jar
 tasks.shadowJar {
     archiveFileName.set("lecturetube-mcp.jar")
+    manifest { attributes["Implementation-Version"] = project.version }
     mergeServiceFiles()
 }
 
@@ -45,7 +47,7 @@ val tuwelJar by tasks.registering(com.github.jengelman.gradle.plugins.shadow.tas
     archiveFileName.set("tuwel-mcp.jar")
     from(sourceSets.main.get().output)
     configurations.set(listOf(project.configurations.runtimeClasspath.get()))
-    manifest { attributes["Main-Class"] = "dev.tuwelmcp.MainKt" }
+    manifest { attributes("Main-Class" to "dev.tuwelmcp.MainKt", "Implementation-Version" to project.version) }
     mergeServiceFiles()
 }
 

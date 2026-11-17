@@ -4,7 +4,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 object Config {
-    const val VERSION = "0.1.0"
+    val VERSION: String = Config::class.java.`package`?.implementationVersion ?: "dev"
 
     /** Tobira portal: GraphQL, feeds, Shibboleth SP #1. */
     const val TOBIRA = "https://video.tuwien.ac.at"
@@ -30,7 +30,7 @@ object Config {
     /** Hosts whose cookies are captured from the login browser and stored. */
     val SESSION_HOSTS = listOf(TOBIRA_HOST, OPENCAST_HOST, "cdn.video.tuwien.ac.at", TUWEL_HOST, IDP_HOST)
 
-    const val USER_AGENT = "lecturetube-mcp/$VERSION (+unofficial MCP server)"
+    val USER_AGENT = "lecturetube-mcp/$VERSION (+unofficial MCP server)"
 
     /** Base directory for session data and the dedicated login browser profile. */
     val dataDir: Path by lazy {
