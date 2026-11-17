@@ -40,19 +40,19 @@ lecture recordings, so you can ask things like:
 
 **Requirements:** Java 17+ and, for transcription and keyframes, [`ffmpeg`](https://ffmpeg.org) on the `PATH`.
 
-1. Download `tuwel-mcp.jar` and `lecturetube-mcp.jar` from the [latest release](https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest),
-   or build them with `./gradlew allJars` (into `build/libs/`).
-2. Add them to `claude_desktop_config.json`:
-   ```json
-   {
-     "mcpServers": {
-       "tuwel":       { "command": "java", "args": ["-jar", "/path/to/tuwel-mcp.jar"] },
-       "lecturetube": { "command": "java", "args": ["-jar", "/path/to/lecturetube-mcp.jar"] }
-     }
-   }
-   ```
-   Claude Code: `claude mcp add tuwel -- java -jar /path/to/tuwel-mcp.jar` (same for `lecturetube`).
-3. Restart the client. `java -jar tuwel-mcp.jar doctor` checks the setup.
+In Claude Code:
+
+```
+/plugin install tuwien --marketplace Swordpro3001/TUWIEN-MCP
+```
+
+This adds both servers. While enabling the plugin, Claude Code asks for an optional
+[Groq API key](#transcription) for fast cloud transcription; leave it empty to transcribe locally. On first start the
+plugin downloads the jars of the matching release and checks them against their published checksums.
+
+Then just ask: *"Log me in to TUWEL and show my courses."*
+
+Using Claude Desktop or another MCP client? See [Local build](#local-build).
 
 ## What it can do
 
@@ -131,7 +131,9 @@ notification when a long job finishes.
 <tr><td><b>Audio leaves your computer</b></td><td>yes, to the provider</td><td>no</td></tr>
 </table>
 
-**Enable the cloud engine:** get a key at [console.groq.com](https://console.groq.com) and save it in
+**Enable the cloud engine:** create a key at [console.groq.com/keys](https://console.groq.com/keys).
+With the Claude Code plugin, paste it when Claude Code asks for the *Groq API key* while enabling the plugin
+(it is kept in your system's credential store; leave it empty for local transcription). Otherwise save it in
 `~/.config/lecturetube-mcp/transcription.json` (then `chmod 600` it):
 
 ```json
@@ -178,6 +180,24 @@ All optional. Set them as environment variables. `transcription.json` supports o
 | `LECTURETUBE_MEDIA_CACHE_GB` | Video cache limit (default 5) |
 
 Command line: `java -jar tuwel-mcp.jar login | status | logout | doctor` (same for `lecturetube-mcp.jar`).
+
+## Local build
+
+For Claude Desktop, other MCP clients, or running your own build without the plugin:
+
+1. Download `tuwel-mcp.jar` and `lecturetube-mcp.jar` from the [latest release](https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest),
+   or build them with `./gradlew allJars` (into `build/libs/`).
+2. Add them to `claude_desktop_config.json`:
+   ```json
+   {
+     "mcpServers": {
+       "tuwel":       { "command": "java", "args": ["-jar", "/path/to/tuwel-mcp.jar"] },
+       "lecturetube": { "command": "java", "args": ["-jar", "/path/to/lecturetube-mcp.jar"] }
+     }
+   }
+   ```
+   Claude Code: `claude mcp add tuwel -- java -jar /path/to/tuwel-mcp.jar` (same for `lecturetube`).
+3. Restart the client. `java -jar tuwel-mcp.jar doctor` checks the setup.
 
 ## Development
 

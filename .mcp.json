@@ -2,11 +2,27 @@
   "mcpServers": {
     "tuwel": {
       "command": "java",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java", "tuwel", "${CLAUDE_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_DATA}"]
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java",
+        "tuwel",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "${CLAUDE_PLUGIN_DATA}"
+      ],
+      "env": {
+        "TRANSCRIBE_API_KEY": "${user_config.groqApiKey}"
+      }
     },
     "lecturetube": {
       "command": "java",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java", "lecturetube", "${CLAUDE_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_DATA}"]
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/bin/Launcher.java",
+        "lecturetube",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "${CLAUDE_PLUGIN_DATA}"
+      ],
+      "env": {
+        "TRANSCRIBE_API_KEY": "${user_config.groqApiKey}"
+      }
     }
   }
 }
