@@ -1,13 +1,15 @@
+<h1 align="center">TU Wien for Claude</h1>
+
 <p align="center">
-  <img src="assets/hero.svg" width="880" alt="TU Wien for Claude: transcribe an hour of audio in under 20 seconds, one login for TUWEL and LectureTube, 40 tools">
+  <img src="assets/hero.svg" width="880" alt="Your courses and lectures, right inside Claude: an hour of audio transcribed in under 20 seconds, one login for TUWEL and LectureTube, 40 tools">
 </p>
 
 <p align="center">
-  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Swordpro3001/TUWIEN-MCP/ci.yml?branch=main&style=flat-square&color=0a7ab8&label=CI" alt="CI"></a>
-  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=0a7ab8&label=release" alt="Release"></a>
-  <img src="https://img.shields.io/badge/java-17%2B-0a7ab8?style=flat-square" alt="Java 17+">
-  <img src="https://img.shields.io/badge/Claude%20Code-plugin-0a7ab8?style=flat-square" alt="Claude Code plugin">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0a7ab8?style=flat-square" alt="MIT license"></a>
+  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Swordpro3001/TUWIEN-MCP/ci.yml?branch=main&style=flat-square&color=d946ef&label=CI" alt="CI"></a>
+  <a href="https://github.com/Swordpro3001/TUWIEN-MCP/releases/latest"><img src="https://img.shields.io/github/v/release/Swordpro3001/TUWIEN-MCP?style=flat-square&color=d946ef&label=release" alt="Release"></a>
+  <img src="https://img.shields.io/badge/java-17%2B-d946ef?style=flat-square" alt="Java 17+">
+  <img src="https://img.shields.io/badge/Claude%20Code-plugin-d946ef?style=flat-square" alt="Claude Code plugin">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d946ef?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">

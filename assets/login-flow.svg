@@ -1,56 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="880" height="250" viewBox="0 0 880 250" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-  <style>
-    .card { fill: #f6f8fa; stroke: #d0d7de; }
-    .num { fill: #0a7ab8; }
-    .title { fill: #1f2328; font-weight: 600; font-size: 15px; }
-    .text { fill: #59636e; font-size: 13px; }
-    .arrow { stroke: #8c959f; }
-    .note { fill: #59636e; font-size: 13px; }
-    @media (prefers-color-scheme: dark) {
-      .card { fill: #161b22; stroke: #30363d; }
-      .num { fill: #4aa8de; }
-      .title { fill: #e6edf3; }
-      .text, .note { fill: #9198a1; }
-      .arrow { stroke: #6e7681; }
-    }
-  </style>
-  <defs>
-    <marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0 0 L10 5 L0 10 z" fill="#8c959f"/>
-    </marker>
-  </defs>
-  <g>
-    <rect class="card" x="10" y="20" width="190" height="160" rx="12"/>
-    <circle class="num" cx="40" cy="50" r="15"/><text x="40" y="55" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">1</text>
-    <text class="title" x="26" y="92">Claude calls login</text>
-    <text class="text" x="26" y="116">when a tool needs it</text>
-    <text class="text" x="26" y="134">or you ask for it</text>
-
-    <rect class="card" x="230" y="20" width="190" height="160" rx="12"/>
-    <circle class="num" cx="260" cy="50" r="15"/><text x="260" y="55" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">2</text>
-    <text class="title" x="246" y="92">Browser opens</text>
-    <text class="text" x="246" y="116">your default browser,</text>
-    <text class="text" x="246" y="134">separate profile, at the</text>
-    <text class="text" x="246" y="152">real TU Wien login page</text>
-
-    <rect class="card" x="450" y="20" width="190" height="160" rx="12"/>
-    <circle class="num" cx="480" cy="50" r="15"/><text x="480" y="55" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">3</text>
-    <text class="title" x="466" y="92">You sign in</text>
-    <text class="text" x="466" y="116">as usual, including 2FA;</text>
-    <text class="text" x="466" y="134">the server never sees</text>
-    <text class="text" x="466" y="152">your password</text>
-
-    <rect class="card" x="670" y="20" width="200" height="160" rx="12"/>
-    <circle class="num" cx="700" cy="50" r="15"/><text x="700" y="55" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">4</text>
-    <text class="title" x="686" y="92">Session is stored</text>
-    <text class="text" x="686" y="116">signed in to TUWEL,</text>
-    <text class="text" x="686" y="134">LectureTube and Opencast;</text>
-    <text class="text" x="686" y="152">the window closes</text>
-  </g>
-  <g class="arrow" stroke-width="2" marker-end="url(#head)">
-    <line x1="203" y1="100" x2="226" y2="100"/>
-    <line x1="423" y1="100" x2="446" y2="100"/>
-    <line x1="643" y1="100" x2="666" y2="100"/>
-  </g>
-  <text class="note" x="440" y="222" text-anchor="middle">Later logins run silently in the background while your TU Wien session is valid.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="290" viewBox="0 0 880 290" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs><linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e11d74" stop-opacity="0.55"/><stop offset="1" stop-color="#e11d74" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6366f1" stop-opacity="0.5"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.05"/></pattern>
+    <clipPath id="frame"><rect width="880" height="290" rx="20"/></clipPath></defs>
+  <g clip-path="url(#frame)"><rect width="880" height="290" fill="#0b0b12"/><rect width="880" height="290" fill="url(#grid)"/><ellipse cx="120" cy="290" rx="300" ry="160" fill="url(#glowA)"/><ellipse cx="800" cy="0" rx="300" ry="160" fill="url(#glowB)"/></g><rect x="0.5" y="0.5" width="879" height="289" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="28" y="36" font-size="12" font-weight="600" letter-spacing="1.5" fill="#d946ef">HOW THE LOGIN WORKS</text>
+  <rect x="22" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <rect x="40" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
+    <text x="57" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">1</text>
+    <text x="40" y="140" font-size="16" font-weight="600" fill="#fafafa">Claude calls login</text>
+    <text x="40" y="166" font-size="13" fill="#a1a1aa">when a tool needs it</text>
+    <text x="40" y="185" font-size="13" fill="#a1a1aa">or you ask for it</text>
+    <text x="40" y="204" font-size="13" fill="#a1a1aa"></text>
+  <rect x="240" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <rect x="258" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
+    <text x="275" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">2</text>
+    <text x="258" y="140" font-size="16" font-weight="600" fill="#fafafa">Browser opens</text>
+    <text x="258" y="166" font-size="13" fill="#a1a1aa">your default browser,</text>
+    <text x="258" y="185" font-size="13" fill="#a1a1aa">separate profile, at the</text>
+    <text x="258" y="204" font-size="13" fill="#a1a1aa">real TU Wien login page</text>
+  <rect x="458" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <rect x="476" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
+    <text x="493" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">3</text>
+    <text x="476" y="140" font-size="16" font-weight="600" fill="#fafafa">You sign in</text>
+    <text x="476" y="166" font-size="13" fill="#a1a1aa">as usual, including 2FA;</text>
+    <text x="476" y="185" font-size="13" fill="#a1a1aa">the server never sees</text>
+    <text x="476" y="204" font-size="13" fill="#a1a1aa">your password</text>
+  <rect x="676" y="56" width="194" height="166" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1"/>
+    <rect x="694" y="74" width="34" height="34" rx="10" fill="url(#accent)"/>
+    <text x="711" y="97" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">4</text>
+    <text x="694" y="140" font-size="16" font-weight="600" fill="#fafafa">Session is stored</text>
+    <text x="694" y="166" font-size="13" fill="#a1a1aa">signed in to TUWEL,</text>
+    <text x="694" y="185" font-size="13" fill="#a1a1aa">LectureTube and Opencast;</text>
+    <text x="694" y="204" font-size="13" fill="#a1a1aa">the window closes</text>
+  <path d="M219 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M229 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M437 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M447 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M655 139h14" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/><path d="M665 134l5 5l-5 5" fill="none" stroke="#d946ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="440" y="262" text-anchor="middle" font-size="13" fill="#a1a1aa">Later logins run silently while your TU Wien session is valid.</text>
 </svg>
