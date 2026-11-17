@@ -77,7 +77,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
+          # The plugin launcher downloads the release jars matching this version.
+          sed -i -E "s/(\"version\": *\")[^\"]+/\1$VERSION/" .claude-plugin/plugin.json
+          git add CHANGELOG.md .claude-plugin/plugin.json
           git commit -m "chore(release): v$VERSION"
           git tag -a "v$VERSION" -m "v$VERSION"
           git push origin HEAD:main "v$VERSION"

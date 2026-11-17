@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tuwien-mcp",
+  "description": "Unofficial TU Wien plugins for Claude.",
+  "owner": { "name": "Franz Puerto", "url": "https://github.com/Swordpro3001" },
+  "plugins": [
+    {
+      "name": "tuwien",
+      "description": "TUWEL and LectureTube for Claude: courses, files, deadlines, grades, recordings and transcripts.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

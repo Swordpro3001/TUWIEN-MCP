@@ -1,0 +1,9 @@
+{
+  "name": "tuwien",
+  "version": "0.1.0",
+  "description": "TU Wien for Claude: TUWEL courses, files, assignments, deadlines and grades, plus LectureTube recordings with transcripts, transcription and slide analysis.",
+  "author": { "name": "Franz Puerto", "url": "https://github.com/Swordpro3001" },
+  "repository": "https://github.com/Swordpro3001/TUWIEN-MCP",
+  "license": "MIT",
+  "keywords": ["tu-wien", "tuwel", "moodle", "lecturetube", "opencast", "transcription"]
+}
