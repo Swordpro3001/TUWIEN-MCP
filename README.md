@@ -98,6 +98,10 @@ A whole course or week, combining pages, files and recordings into one summary o
 </tr>
 </table>
 
+<p align="center">
+  <img src="assets/summary.svg" width="880" loading="lazy" alt="Animated example: a student asks Claude to summarize Monday's Analysis 2 lecture; Claude reads the transcript and the slides and answers with a summary document: key ideas with timestamps, then a section for the exam">
+</p>
+
 <details>
 <summary><b>All tools and prompts</b></summary>
 <br>
@@ -124,7 +128,7 @@ Only about 8.5% of LectureTube recordings have captions, and videos uploaded to 
 notification when a long job finishes.
 
 <p align="center">
-  <img src="assets/transcription-speed.svg" width="880" alt="Time to transcribe one hour of audio: cloud under 20 seconds, local about 7 minutes">
+  <img src="assets/transcription-speed.svg" width="880" loading="lazy" alt="Time to transcribe one hour of audio: cloud under 20 seconds, local about 7 minutes">
 </p>
 
 <table>
@@ -152,7 +156,7 @@ Results are cached, and interrupted jobs resume where they stopped.
 ## How it works
 
 <p align="center">
-  <img src="assets/architecture.svg" width="880" alt="Claude talks to the tuwel and lecturetube servers on your computer. They keep the session, transcripts and video cache locally and only connect to TUWEL, LectureTube and the TU Wien login, plus Groq for audio if you added a key">
+  <img src="assets/architecture.svg" width="880" loading="lazy" alt="Claude talks to the tuwel and lecturetube servers on your computer. They keep the session, transcripts and video cache locally and only connect to TUWEL, LectureTube and the TU Wien login, plus Groq for audio if you added a key">
 </p>
 
 Both servers run on your computer. Only requests to TU Wien leave it, and, if you added a Groq key, the audio of
@@ -161,7 +165,7 @@ recordings you transcribe.
 ## Login and privacy
 
 <p align="center">
-  <img src="assets/login-flow.svg" width="880" alt="Login in four steps: Claude calls login, your default browser opens the TU Wien login page, you sign in including 2FA, the session is stored and the window closes">
+  <img src="assets/login-flow.svg" width="880" loading="lazy" alt="Login in four steps: Claude calls login, your default browser opens the TU Wien login page, you sign in including 2FA, the session is stored and the window closes">
 </p>
 
 - **The server never sees your password.** You log in on the real TU Wien page.

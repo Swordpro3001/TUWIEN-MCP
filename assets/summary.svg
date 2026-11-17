@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Animated example: a student asks Claude to summarize Monday's Analysis 2 lecture; Claude reads the transcript and slides and answers with a summary document with timestamps.</title>
+  <style>
+    @keyframes bubble { 0%, 0% { opacity: 0; transform: translateY(8px); } 2%, 100% { opacity: 1; transform: none; } }
+    .bubble { animation: bubble 9s ease-out both; }
+    @keyframes type { 0%, 3% { transform: scaleX(1); } 20%, 100% { transform: scaleX(0); } }
+    .cover { transform-box: fill-box; transform-origin: right; animation: type 9s steps(28, end) both; }
+    @keyframes caret { 0%, 3% { transform: translateX(0); opacity: 1; } 20% { transform: translateX(340px); opacity: 1; } 22%, 100% { opacity: 0; transform: translateX(340px); } }
+    .caret { animation: caret 9s steps(28, end) both; }
+    @keyframes chip1 { 0%, 24% { opacity: 0; transform: translateY(8px); } 27%, 100% { opacity: 1; transform: none; } }
+    .chip1 { animation: chip1 9s ease-out both; }
+    @keyframes chip2 { 0%, 30% { opacity: 0; transform: translateY(8px); } 33%, 100% { opacity: 1; transform: none; } }
+    .chip2 { animation: chip2 9s ease-out both; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .pulse { animation: pulse 1s ease-in-out 5; }
+    @keyframes reply { 0%, 38% { opacity: 0; transform: translateY(8px); } 42%, 100% { opacity: 1; transform: none; } }
+    .reply { animation: reply 9s ease-out both; }
+    @keyframes doc { 0%, 44% { opacity: 0; transform: translateY(8px); } 50%, 100% { opacity: 1; transform: none; } }
+    .doc { animation: doc 9s ease-out both; }
+    @keyframes i0 { 0%, 52% { opacity: 0; transform: translateY(8px); } 56%, 100% { opacity: 1; transform: none; } }
+    .i0 { animation: i0 9s ease-out both; }
+    @keyframes i1 { 0%, 58% { opacity: 0; transform: translateY(8px); } 62%, 100% { opacity: 1; transform: none; } }
+    .i1 { animation: i1 9s ease-out both; }
+    @keyframes i2 { 0%, 64% { opacity: 0; transform: translateY(8px); } 68%, 100% { opacity: 1; transform: none; } }
+    .i2 { animation: i2 9s ease-out both; }
+    @keyframes skeleton { 0%, 72% { opacity: 0; transform: translateY(8px); } 78%, 100% { opacity: 1; transform: none; } }
+    .skeleton { animation: skeleton 9s ease-out both; }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .cover, .caret { display: none; } }
+  </style>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d71"/><stop offset="0.45" stop-color="#d946ef"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15151c" stop-opacity="0"/><stop offset="1" stop-color="#15151c"/></linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e11d74" stop-opacity="0.45"/><stop offset="1" stop-color="#e11d74" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6366f1" stop-opacity="0.45"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/></pattern>
+    <clipPath id="frame"><rect width="880" height="520" rx="20"/></clipPath>
+    <clipPath id="docclip"><rect x="92" y="196" width="760" height="300" rx="16"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="880" height="520" fill="#0b0b12"/>
+    <rect width="880" height="520" fill="url(#grid)"/>
+    <ellipse cx="80" cy="520" rx="320" ry="190" fill="url(#glowA)"/>
+    <ellipse cx="840" cy="0" rx="320" ry="170" fill="url(#glowB)"/>
+    <rect width="880" height="44" fill="#ffffff" fill-opacity="0.03"/>
+    <line x1="0" y1="44" x2="880" y2="44" stroke="#ffffff" stroke-opacity="0.08"/>
+  </g>
+  <rect x="0.5" y="0.5" width="879" height="519" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+  <circle cx="26" cy="22" r="5.5" fill="#ff5f57"/><circle cx="44" cy="22" r="5.5" fill="#febc2e"/><circle cx="62" cy="22" r="5.5" fill="#28c840"/>
+  <text x="440" y="27" text-anchor="middle" font-size="13" fill="#a1a1aa">Claude  ·  tuwien plugin</text>
+
+  <g class="bubble">
+    <rect x="472" y="62" width="380" height="42" rx="14" fill="#27272a" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="492" y="88" font-size="14" fill="#fafafa">Summarize Monday's Analysis 2 lecture</text>
+    <rect class="cover" x="492" y="70" width="340" height="26" fill="#27272a"/>
+    <rect class="caret" x="492" y="74" width="2" height="18" fill="#d946ef"/>
+  </g>
+
+  <g class="chip1" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">
+    <rect x="28" y="124" width="250" height="28" rx="14" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12"/>
+    <circle class="pulse" cx="46" cy="138" r="4" fill="#6366f1"/>
+    <text x="58" y="142" fill="#d4d4d8">lecturetube · get_transcript</text>
+  </g>
+  <g class="chip2" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">
+    <rect x="290" y="124" width="270" height="28" rx="14" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12"/>
+    <circle class="pulse" cx="308" cy="138" r="4" fill="#ff3d71"/>
+    <text x="320" y="142" fill="#d4d4d8">lecturetube · analyze_keyframes</text>
+  </g>
+
+  <g class="reply">
+    <rect x="28" y="168" width="44" height="44" rx="12" fill="url(#accent)"/>
+    <text x="50" y="196" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">C</text>
+    <text x="92" y="186" font-size="14" fill="#e4e4e7">Here is a summary of the lecture, with timestamps to jump back in.</text>
+  </g>
+
+  <g class="doc">
+    <rect x="92" y="200" width="760" height="296" rx="16" fill="#15151c" stroke="#ffffff" stroke-opacity="0.12"/>
+    <rect x="112" y="218" width="30" height="36" rx="5" fill="none" stroke="url(#accent)" stroke-width="2"/>
+    <path d="M119 230h16M119 237h16M119 244h10" stroke="#d946ef" stroke-width="2" stroke-linecap="round"/>
+    <text x="156" y="234" font-size="15" font-weight="600" fill="#fafafa">Analysis 2, lecture 9: uniform convergence</text>
+    <text x="156" y="253" font-size="12" fill="#a1a1aa">Document  ·  Markdown  ·  48 min lecture</text>
+    <line x1="92" y1="270" x2="852" y2="270" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="128" y="294" font-size="12" font-weight="600" letter-spacing="1" fill="#d946ef">KEY IDEAS</text>
+  </g>
+  <g class="i0">
+    <rect x="128" y="308" width="74" height="20" rx="6" fill="#d946ef" fill-opacity="0.14"/>
+    <text x="165" y="322" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#f0abfc">00:03:10</text>
+    <text x="214" y="322" font-size="13.5" fill="#d4d4d8">Recap: pointwise convergence, and why it is not enough</text>
+  </g>
+  <g class="i1">
+    <rect x="128" y="338" width="74" height="20" rx="6" fill="#d946ef" fill-opacity="0.14"/>
+    <text x="165" y="352" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#f0abfc">00:12:40</text>
+    <text x="214" y="352" font-size="13.5" fill="#d4d4d8">Uniform convergence via the sup-norm, with three examples</text>
+  </g>
+  <g class="i2">
+    <rect x="128" y="368" width="74" height="20" rx="6" fill="#d946ef" fill-opacity="0.14"/>
+    <text x="165" y="382" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#f0abfc">00:41:05</text>
+    <text x="214" y="382" font-size="13.5" fill="#d4d4d8">Weierstrass M-test and the worked power-series example</text>
+  </g>
+  <g class="skeleton" clip-path="url(#docclip)">
+    <text x="128" y="414" font-size="12" font-weight="600" letter-spacing="1" fill="#d946ef">FOR THE EXAM</text>
+    <rect x="128" y="428" width="560" height="10" rx="5" fill="#ffffff" fill-opacity="0.09"/>
+    <rect x="128" y="448" width="470" height="10" rx="5" fill="#ffffff" fill-opacity="0.09"/>
+    <rect x="128" y="468" width="520" height="10" rx="5" fill="#ffffff" fill-opacity="0.09"/>
+    <rect x="93" y="396" width="758" height="100" fill="url(#fade)"/>
+  </g>
+</svg>
