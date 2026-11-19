@@ -13,6 +13,7 @@ import dev.lecturetubemcp.media.MediaException
 import dev.lecturetubemcp.media.Transcriber
 import dev.lecturetubemcp.media.registerMediaTools
 import dev.tuwelmcp.files.FileText
+import dev.lecturetubemcp.api.TranscriptResult
 import dev.tuwelmcp.moodle.MoodleException
 import dev.tuwelmcp.moodle.OpencastActivity
 import dev.tuwelmcp.moodle.TuwelService
@@ -95,7 +96,7 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
             server,
             listOf(
                 "lecture" to prop("string", "A LectureTube lecture (ev…, URL or UUID from course_recordings), or …"),
-                "url" to prop("string", "… a TUWEL video file URL or a TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…), or …"),
+                "url" to prop("string", "… a TUWEL video file URL or a TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…; the activity link without &e= lists its recordings), or …"),
                 "courseId" to prop("integer", "… courseId + cmid (+ filename) of a video file in a course."),
                 "cmid" to prop("integer", "Module id of the video file."),
                 "filename" to prop("string", "File name, if the module has several files."),
@@ -103,6 +104,7 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
             resolve = { a ->
                 a.str("lecture")?.let { svc.lectureTarget(it) }
                     ?: a.str("url")?.takeIf { OpencastActivity.parseUrl(it) != null }?.let { svc.opencastTarget(it) }
+                    ?: a.str("url")?.let { OpencastActivity.parseCollection(it) }?.let { throw MoodleException(svc.opencastCollection(it)) }
                     ?: svc.fileTarget(a.str("url"), a.long("courseId"), a.long("cmid"), a.str("filename"))
             },
             onError = { e ->
@@ -407,7 +409,7 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
                 "TUWEL Opencast recordings (url from course_recordings) and video files uploaded to TUWEL. If there is no transcript yet, it says so; then call transcribe_recording. Long lectures can be read in windows.",
             schema(
                 "lecture" to prop("string", "Lecture id (ev…), LectureTube URL or Opencast UUID (from course_recordings), or …"),
-                "url" to prop("string", "… a TUWEL video file URL or TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…), or courseId + cmid (+ filename)."),
+                "url" to prop("string", "… a TUWEL video file URL or TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…; the activity link without &e= lists its recordings), or courseId + cmid (+ filename)."),
                 "courseId" to prop("integer", "Course id of a video file."), "cmid" to prop("integer", "Module id of a video file."),
                 "filename" to prop("string", "File name, if the module has several files."),
                 "lang" to prop("string", "Caption language, e.g. de or en."),
@@ -416,6 +418,7 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
             ),
         ) { a ->
             val r = a.str("lecture")?.let { svc.listen(it, a.str("lang"), a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000) }
+                ?: a.str("url")?.let { OpencastActivity.parseCollection(it) }?.let { TranscriptResult(true, svc.opencastCollection(it), "") }
                 ?: a.str("url")?.let { OpencastActivity.parseUrl(it) }?.let { (_, id) ->
                     svc.listenFile(id, Transcriber.cached(id)?.second?.title ?: "Opencast recording $id", a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000)
                 }

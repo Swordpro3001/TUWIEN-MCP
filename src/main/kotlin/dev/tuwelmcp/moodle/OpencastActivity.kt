@@ -24,6 +24,11 @@ object OpencastActivity {
     private val link = Regex("""/mod/opencast/view\.php\?id=(\d+)(?:&|&amp;)e=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})""")
     private val listed = Regex("""<li class="episode" title="([^"]*)">\s*<a href="[^"]*?e=([0-9a-f-]{36})"""")
 
+    private val collection = Regex("""/mod/opencast/view\.php\?id=(\d+)""")
+
+    /** cmid of an activity URL without `e=` (the collection page), or null. */
+    fun parseCollection(url: String): Long? = if (parseUrl(url) != null) null else collection.find(url)?.groupValues?.get(1)?.toLong()
+
     /** (cmid, episode id) of an activity URL with `e=`, or null. */
     fun parseUrl(url: String): Pair<Long, String>? = link.find(url)?.let { it.groupValues[1].toLong() to it.groupValues[2] }
 

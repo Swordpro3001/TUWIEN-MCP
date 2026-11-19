@@ -577,6 +577,14 @@ class TuwelService(val moodle: MoodleClient, val lectureTube: LectureTubeService
         )
     }
 
+    /** The recordings of an Opencast activity's collection page, as a list of urls for the recording tools. */
+    suspend fun opencastCollection(cmid: Long): String {
+        val eps = OpencastActivity.episodes(cmid, moodle.page("/mod/opencast/view.php?id=$cmid"))
+        if (eps.isEmpty()) return "This Opencast activity lists no recordings."
+        return "This Opencast activity lists ${eps.size} recordings. Pass one url to listen_recording, transcribe_recording or analyze_keyframes:\n" +
+            eps.joinToString("\n") { "- ${it.title}: ${it.url}" + if (Transcriber.cached(it.id) != null) " (transcript available)" else "" }
+    }
+
     /** A recording of a TUWEL Opencast activity; transcripts share the Opencast id as key with LectureTube. */
     suspend fun opencastTarget(url: String): MediaTarget {
         val (cmid, id) = OpencastActivity.parseUrl(url) ?: throw MoodleException("Not a TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…).")

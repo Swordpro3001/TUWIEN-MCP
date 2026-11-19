@@ -15,6 +15,8 @@ class OpencastActivityTest {
         assertEquals(3053974L to id, OpencastActivity.parseUrl("https://tuwel.tuwien.ac.at/mod/opencast/view.php?id=3053974&amp;e=$id"))
         assertNull(OpencastActivity.parseUrl("https://tuwel.tuwien.ac.at/mod/opencast/view.php?id=3053974"))
         assertNull(OpencastActivity.parseUrl("https://tuwel.tuwien.ac.at/pluginfile.php/1/a.mp4"))
+        assertEquals(3053974L, OpencastActivity.parseCollection("https://tuwel.tuwien.ac.at/mod/opencast/view.php?id=3053974"))
+        assertNull(OpencastActivity.parseCollection("https://tuwel.tuwien.ac.at/mod/opencast/view.php?id=3053974&e=$id"))
     }
 
     @Test
