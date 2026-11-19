@@ -10,9 +10,11 @@ import dev.lecturetubemcp.auth.LoginManager
 import dev.lecturetubemcp.auth.SessionStore
 import dev.lecturetubemcp.auth.SsoTargets
 import dev.lecturetubemcp.media.MediaException
+import dev.lecturetubemcp.media.Transcriber
 import dev.lecturetubemcp.media.registerMediaTools
 import dev.tuwelmcp.files.FileText
 import dev.tuwelmcp.moodle.MoodleException
+import dev.tuwelmcp.moodle.OpencastActivity
 import dev.tuwelmcp.moodle.TuwelService
 import io.modelcontextprotocol.kotlin.sdk.server.ClientConnection
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -62,7 +64,7 @@ the student logs in, the session is reused automatically, also for LectureTube).
 Typical flows:
 - What's due?           → upcoming_deadlines, list_assignments, get_assignment
 - Study a week/topic    → list_courses → get_course(courseId, section) → read_file / read_zip / read_module
-- Lecture recordings    → course_recordings(courseId) → listen_recording(lecture or video file)
+- Lecture recordings    → course_recordings(courseId) → listen_recording(lecture, Opencast recording url or video file)
 - No captions?          → transcribe_recording creates them from the MP4 (background job; transcription_status
                           waits and returns the transcript when ready, no polling needed); afterwards
                           listen_recording / summarize use them
@@ -93,13 +95,14 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
             server,
             listOf(
                 "lecture" to prop("string", "A LectureTube lecture (ev…, URL or UUID from course_recordings), or …"),
-                "url" to prop("string", "… a TUWEL video file URL, or …"),
+                "url" to prop("string", "… a TUWEL video file URL or a TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…), or …"),
                 "courseId" to prop("integer", "… courseId + cmid (+ filename) of a video file in a course."),
                 "cmid" to prop("integer", "Module id of the video file."),
                 "filename" to prop("string", "File name, if the module has several files."),
             ),
             resolve = { a ->
                 a.str("lecture")?.let { svc.lectureTarget(it) }
+                    ?: a.str("url")?.takeIf { OpencastActivity.parseUrl(it) != null }?.let { svc.opencastTarget(it) }
                     ?: svc.fileTarget(a.str("url"), a.long("courseId"), a.long("cmid"), a.str("filename"))
             },
             onError = { e ->
@@ -391,19 +394,20 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
     private fun recordingsAndSummaries(server: Server) {
         server.tool(
             "course_recordings",
-            "LectureTube recordings belonging to a TUWEL course: linked videos, embedded players, LTI activities, " +
-                "and the course's recording series (matched via course permissions and LVA number). Shows which lectures have transcripts.",
+            "Recordings belonging to a TUWEL course: LectureTube links, embedded players, LTI activities, the course's recording series " +
+                "(matched via course permissions and LVA number), and the recordings of TUWEL Opencast activities (with a url for " +
+                "listen_recording / transcribe_recording). Shows which lectures have transcripts.",
             schema("courseId" to prop("integer", "Course id."), required = listOf("courseId")),
         ) { a -> json(svc.courseRecordings(a.reqLong("courseId"))) }
 
         server.tool(
             "listen_recording",
             "\"Listen\" to a recording: returns its spoken content as a transcript with [hh:mm:ss] timestamps, from " +
-                "LectureTube captions or from a transcript generated with transcribe_recording. Works for LectureTube lectures and for " +
-                "video files uploaded to TUWEL. If there is no transcript yet, it says so; then call transcribe_recording. Long lectures can be read in windows.",
+                "LectureTube captions or from a transcript generated with transcribe_recording. Works for LectureTube lectures, " +
+                "TUWEL Opencast recordings (url from course_recordings) and video files uploaded to TUWEL. If there is no transcript yet, it says so; then call transcribe_recording. Long lectures can be read in windows.",
             schema(
                 "lecture" to prop("string", "Lecture id (ev…), LectureTube URL or Opencast UUID (from course_recordings), or …"),
-                "url" to prop("string", "… a TUWEL video file URL, or courseId + cmid (+ filename)."),
+                "url" to prop("string", "… a TUWEL video file URL or TUWEL Opencast recording URL (…/mod/opencast/view.php?id=…&e=…), or courseId + cmid (+ filename)."),
                 "courseId" to prop("integer", "Course id of a video file."), "cmid" to prop("integer", "Module id of a video file."),
                 "filename" to prop("string", "File name, if the module has several files."),
                 "lang" to prop("string", "Caption language, e.g. de or en."),
@@ -412,9 +416,12 @@ class TuwelMcp(private val svc: TuwelService, private val logins: LoginManager) 
             ),
         ) { a ->
             val r = a.str("lecture")?.let { svc.listen(it, a.str("lang"), a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000) }
+                ?: a.str("url")?.let { OpencastActivity.parseUrl(it) }?.let { (_, id) ->
+                    svc.listenFile(id, Transcriber.cached(id)?.second?.title ?: "Opencast recording $id", a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000)
+                }
                 ?: run {
                     val (url, name) = svc.resolveFile(a.str("url"), a.long("courseId"), a.long("cmid"), a.str("filename"))
-                    svc.listenFile(url, name, a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000)
+                    svc.listenFile(svc.fileKey(url), name, a.int("fromMinute"), a.int("toMinute"), a.int("maxChars") ?: 100_000)
                 }
             if (r.ok) ok(r.text) else err(r.text)
         }
