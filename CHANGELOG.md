@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.1 (2026-11-19)
+
+### Bug fixes
+
+- **login:** Close browsers left over from earlier runs
+
+### Tests
+
+- Run CI on Windows and test the servers against fake backends
+- Cover LectureTube track selection
+- Wait for browsers to release their profile between tests
 ## 0.1.0 (2026-11-17)
 
 ### Features

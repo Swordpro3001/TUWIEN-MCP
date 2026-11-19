@@ -1,6 +1,6 @@
 {
   "name": "tuwien",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TU Wien for Claude: TUWEL courses, files, assignments, deadlines and grades, plus LectureTube recordings with transcripts, transcription and slide analysis.",
   "author": {
     "name": "Franz Puerto",
