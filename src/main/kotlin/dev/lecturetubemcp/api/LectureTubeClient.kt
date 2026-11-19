@@ -23,11 +23,13 @@ import java.time.Duration
 class ApiException(message: String, val notAuthorized: Boolean = false) : Exception(message)
 
 /** Thin HTTP layer for Tobira GraphQL, the Opencast Search API and the CDN. */
-class LectureTubeClient(private val sessionProvider: () -> Session? = { SessionStore.current }) {
+class LectureTubeClient(
+    private val sessionProvider: () -> Session? = { SessionStore.current },
     private val http: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NEVER) // a redirect means "go to Shibboleth", i.e. not logged in
         .connectTimeout(Duration.ofSeconds(15))
-        .build()
+        .build(),
+) {
 
     val json = Json { ignoreUnknownKeys = true; prettyPrint = false }
 

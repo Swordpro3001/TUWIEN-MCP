@@ -37,11 +37,13 @@ class MoodleException(message: String, val errorCode: String? = null, val needsL
  * and stays valid after the web session ends.
  * Fallback: the AJAX endpoint (`/lib/ajax/service.php`) with the session cookie + `sesskey`.
  */
-class MoodleClient(private val sessionProvider: () -> Session? = { SessionStore.current }) {
+class MoodleClient(
+    private val sessionProvider: () -> Session? = { SessionStore.current },
     val http: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NEVER)
         .connectTimeout(Duration.ofSeconds(15))
-        .build()
+        .build(),
+) {
     val json = Json { ignoreUnknownKeys = true }
     private val tokenLock = Mutex()
 
