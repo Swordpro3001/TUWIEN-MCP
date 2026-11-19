@@ -2,12 +2,25 @@ package dev.lecturetubemcp
 
 import dev.lecturetubemcp.auth.BrowserKind
 import dev.lecturetubemcp.auth.DefaultBrowser
+import dev.lecturetubemcp.auth.destroyTree
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DefaultBrowserTest {
+    /** Like `/usr/bin/opera-gx`: a wrapper script whose child is the real browser. */
+    @Test fun destroyTreeAlsoKillsChildrenOfWrapperScripts() {
+        if (System.getProperty("os.name").lowercase().contains("win")) return
+        val p = ProcessBuilder("sh", "-c", "sleep 300 & wait").start()
+        while (p.descendants().count() == 0L) Thread.sleep(20)
+        val child = p.descendants().findFirst().get()
+        p.destroyTree()
+        assertFalse(p.isAlive)
+        assertFalse(child.isAlive)
+    }
+
     @Test fun parsesDesktopEntryMainGroupOnly() {
         val lines = """
             [Desktop Entry]

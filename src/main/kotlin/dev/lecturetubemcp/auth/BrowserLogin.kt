@@ -137,6 +137,11 @@ object Browsers {
 
 private fun freePort(): Int = ServerSocket(0).use { it.localPort }
 
+/** Browsers we started; killed if the JVM exits (Ctrl+C, crash) so they don't keep the login profile locked. */
+private val liveBrowsers = java.util.concurrent.ConcurrentHashMap.newKeySet<Process>().also { set ->
+    Runtime.getRuntime().addShutdownHook(Thread { set.forEach { p -> (p.descendants().toList() + p.toHandle()).forEach { it.destroyForcibly() } } })
+}
+
 private fun startProcess(cmd: List<String>): Process =
     ProcessBuilder(cmd)
         // Never let browser output reach stdout: stdout is the MCP JSON-RPC channel.
@@ -144,6 +149,51 @@ private fun startProcess(cmd: List<String>): Process =
         .redirectError(ProcessBuilder.Redirect.DISCARD)
         .redirectInput(ProcessBuilder.Redirect.PIPE)
         .start()
+        .also { liveBrowsers += it }
+
+/**
+ * A browser left over from an earlier run (JVM killed before it could clean up) still holds our login profile, and a
+ * new launch would hand off to it and exit (Chromium: code 21). Ask it to close through its debugging port, recorded in
+ * the profile's `DevToolsActivePort` (written by Chromium itself, by us for Firefox). Works the same on every OS.
+ */
+internal suspend fun closeLeftover(profile: Path, kind: BrowserKind) {
+    val lines = runCatching { Files.readAllLines(profile.resolve(PORT_FILE)) }.getOrNull() ?: return
+    val port = lines.getOrNull(0)?.trim()?.toIntOrNull() ?: return
+    runCatching {
+        val rpc = WsRpc.connect("ws://127.0.0.1:$port${lines.getOrElse(1) { "" }.trim()}")
+        try {
+            if (kind == BrowserKind.FIREFOX) rpc.call("session.new", buildJsonObject { putJsonObject("capabilities") {} }, timeoutMs = 5_000)
+            rpc.call(if (kind == BrowserKind.FIREFOX) "browser.close" else "Browser.close", timeoutMs = 5_000)
+        } finally {
+            rpc.close()
+        }
+    }.onFailure { return } // nothing listening: no leftover (or not ours)
+    // The profile lock is released only once the process is gone, a moment after the port closes.
+    val start = TimeSource.Monotonic.markNow()
+    while (start.elapsedNow() < 10.seconds &&
+        (portOpen(port) || listOf("SingletonLock", "lock").any { Files.exists(profile.resolve(it), java.nio.file.LinkOption.NOFOLLOW_LINKS) })
+    ) delay(200)
+}
+
+private const val PORT_FILE = "DevToolsActivePort"
+
+private fun portOpen(port: Int): Boolean =
+    runCatching { java.net.Socket().use { it.connect(java.net.InetSocketAddress("127.0.0.1", port), 200) } }.isSuccess
+
+/**
+ * The browser command may be a wrapper script that forks the real browser, so kill the whole tree and wait for it:
+ * a browser still shutting down keeps the profile locked for the next launch.
+ */
+internal fun Process.destroyTree(wait: Duration = 5.seconds) {
+    val all = descendants().toList() + toHandle() // collect before killing: orphans get reparented and drop out of descendants()
+    all.forEach { it.destroy() }
+    val deadline = System.nanoTime() + wait.inWholeNanoseconds
+    for (h in all) {
+        runCatching { h.onExit().get(maxOf(0, deadline - System.nanoTime()), java.util.concurrent.TimeUnit.NANOSECONDS) }
+        if (h.isAlive) h.destroyForcibly()
+    }
+    liveBrowsers -= this
+}
 
 private fun JsonPrimitive.asLong(): Long? = runCatching { double.toLong() }.getOrNull()
 
@@ -195,7 +245,7 @@ class FirefoxDriver private constructor(override val process: Process, private v
     override suspend fun close() {
         runCatching { rpc.call("browser.close", timeoutMs = 5_000) }
         rpc.close()
-        process.destroy()
+        withContext(Dispatchers.IO) { process.destroyTree() }
     }
 
     companion object {
@@ -213,6 +263,7 @@ class FirefoxDriver private constructor(override val process: Process, private v
                 user_pref("remote.active-protocols", 1);
                 """.trimIndent(),
             )
+            closeLeftover(profile, BrowserKind.FIREFOX)
             Files.deleteIfExists(profile.resolve("lock"))
             val port = freePort()
             val cmd = (exe + listOf("--new-instance", "--no-remote", "--profile", profile.toString(), "--remote-debugging-port", port.toString())).toMutableList()
@@ -220,6 +271,7 @@ class FirefoxDriver private constructor(override val process: Process, private v
             cmd += "about:blank"
             val proc = startProcess(cmd)
             val rpc = retryConnect(proc) { WsRpc.connect("ws://127.0.0.1:$port/session") }
+            Files.writeString(profile.resolve(PORT_FILE), "$port\n/session") // so a later run can close this one if it's left over
             rpc.call("session.new", buildJsonObject { putJsonObject("capabilities") {} })
             FirefoxDriver(proc, rpc)
         }
@@ -276,14 +328,15 @@ class ChromiumDriver private constructor(override val process: Process, private 
     override suspend fun close() {
         runCatching { rpc.call("Browser.close", timeoutMs = 5_000) }
         rpc.close()
-        process.destroy()
+        withContext(Dispatchers.IO) { process.destroyTree() }
     }
 
     companion object {
         suspend fun launch(exe: List<String>, profileName: String, headless: Boolean): ChromiumDriver = withContext(Dispatchers.IO) {
             val profile: Path = Config.dataDir.resolve("profiles").resolve(profileName)
             Files.createDirectories(profile)
-            val portFile = profile.resolve("DevToolsActivePort")
+            closeLeftover(profile, BrowserKind.CHROMIUM)
+            val portFile = profile.resolve(PORT_FILE)
             Files.deleteIfExists(portFile)
             val cmd = (exe + listOf(
                 "--user-data-dir=$profile", "--remote-debugging-port=0",
@@ -314,13 +367,13 @@ private suspend fun <T> retryConnect(proc: Process, timeout: Duration = 30.secon
         try {
             return block()
         } catch (c: CancellationException) {
-            proc.destroy(); throw c
+            proc.destroyTree(); throw c
         } catch (t: Throwable) {
             last = t
             delay(300)
         }
     }
-    proc.destroy()
+    proc.destroyTree()
     throw IllegalStateException("Could not connect to the browser's debugging port: ${last?.message}")
 }
 
@@ -349,7 +402,7 @@ class LoginFlow(
         val idpCookies = SessionStore.current?.cookiesFor(Config.IDP_HOST).orEmpty()
         if (idpCookies.isNotEmpty()) {
             log("Trying silent login with the stored TU Wien SSO session …")
-            val r = runCatching { attempt(exe, headless = true, timeout = 25.seconds, seed = idpCookies) }
+            val r = runCatching { attempt(exe, headless = true, timeout = 5.seconds, seed = idpCookies) }
                 .getOrElse { LoginResult(false, "silent login failed: ${it.message}") }
             if (r.ok || !interactive) return r
             log("Silent login not possible (SSO session expired). Opening the login page …")
