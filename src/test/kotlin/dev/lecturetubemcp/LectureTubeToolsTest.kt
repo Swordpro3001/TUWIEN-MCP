@@ -16,6 +16,10 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import dev.lecturetubemcp.api.audioSource
+import dev.lecturetubemcp.api.videoSource
+import dev.lecturetubemcp.media.MediaException
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -145,6 +149,21 @@ class LectureTubeToolsTest {
     @Test fun bigDownloadsAreRefused(): Unit = runBlocking {
         val c = FakeLectureTube.service(FakeHttp { dev.testkit.Resp(200, ByteArray(20)) }).client
         assertContains(runCatching { c.getBytes("https://cdn.video.tuwien.ac.at/x", maxBytes = 10) }.exceptionOrNull()!!.message!!, "too large")
+    }
+
+    @Test fun picksMediaTracks(): Unit = runBlocking {
+        val svc = FakeLectureTube.service(http)
+        val e = svc.event("evKgSNekCVlvX")
+        // Speech-to-text: the smallest presenter track is enough.
+        assertEquals("https://cdn.video.tuwien.ac.at/presenter-360.mp4", svc.audioSource(e).url)
+        assertEquals("de", svc.audioSource(e).language)
+        // Keyframes: the screen capture by default, the camera on request.
+        assertEquals("https://cdn.video.tuwien.ac.at/presentation-1080.mp4", svc.videoSource(e).url)
+        assertEquals("https://cdn.video.tuwien.ac.at/presenter-360.mp4", svc.videoSource(e, "camera").url)
+        val none = e.copy(tracks = emptyList(), hasAuthorizedData = false)
+        assertContains(assertFailsWith<MediaException> { svc.audioSource(none) }.message!!, "login")
+        assertContains(assertFailsWith<MediaException> { svc.videoSource(none) }.message!!, "try `login`")
+        assertContains(assertFailsWith<MediaException> { svc.audioSource(none.copy(hasAuthorizedData = true)) }.message!!, "no downloadable MP4")
     }
 
     @Test fun promptsAreListed() {
