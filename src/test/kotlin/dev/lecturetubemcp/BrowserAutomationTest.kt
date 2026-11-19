@@ -28,7 +28,20 @@ import kotlin.time.Duration.Companion.seconds
 class BrowserAutomationTest {
     private fun browser(kind: BrowserKind): BrowserExe? = Browsers.detect().firstOrNull { it.kind == kind }
 
-    @AfterTest fun forgetSession() = SessionStore.clear()
+    /**
+     * Tests reuse the same login profiles, and a browser keeps its profile locked for a moment after close()
+     * returns; a launch in that moment hands off to the dying browser and exits (Chromium code 21). Wait it out.
+     */
+    @AfterTest fun cleanup() {
+        SessionStore.clear()
+        val profiles = Config.dataDir.resolve("profiles")
+        val deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline && java.nio.file.Files.isDirectory(profiles) &&
+            java.nio.file.Files.list(profiles).use { s -> s.toList() }.any { p ->
+                listOf("SingletonLock", "lock").any { java.nio.file.Files.exists(p.resolve(it), java.nio.file.LinkOption.NOFOLLOW_LINKS) }
+            }
+        ) Thread.sleep(100)
+    }
 
     private fun driverRoundTrip(kind: BrowserKind) = runBlocking {
         val exe = browser(kind) ?: return@runBlocking
